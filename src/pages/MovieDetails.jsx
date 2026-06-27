@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
 import { Play, Download, X, Plus, ArrowLeft } from 'lucide-react';
@@ -158,6 +158,19 @@ const MovieDetails = ({ type }) => {
     };
   }, [streamUrl]);
 
+  const playerOptions = useMemo(() => ({
+    autoplay: true,
+    controls: true,
+    fill: true,
+    controlBar: {
+      skipButtons: {
+        forward: 10,
+        backward: 10
+      }
+    },
+    sources: [{ src: streamUrl, type: 'video/mp4' }]
+  }), [streamUrl]);
+
   if (loading) return <div className="page-loader"><div className="spinner"></div></div>;
   if (error) return <div className="error-message">{error}</div>;
   if (!movie) return <div className="error-message">Movie not found.</div>;
@@ -181,15 +194,7 @@ const MovieDetails = ({ type }) => {
         {/* We add a center ripple element which we'll animate via CSS when VideoJS fires events (or we can just let VideoJS handle big play button) */}
         
         <div className="movie-player-container-fullscreen">
-          <VideoPlayer 
-            options={{
-              autoplay: true,
-              controls: true,
-              responsive: true,
-              fluid: true,
-              sources: [{ src: streamUrl, type: 'video/mp4' }]
-            }}
-          />
+          <VideoPlayer options={playerOptions} />
         </div>
       </div>
     );

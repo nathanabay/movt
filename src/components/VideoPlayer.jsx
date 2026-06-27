@@ -12,7 +12,8 @@ export const VideoPlayer = ({ options, onReady }) => {
 
   useEffect(() => {
     if (!playerRef.current) {
-      const videoElement = document.createElement("video-js");
+      const videoElement = document.createElement("video");
+      videoElement.classList.add('video-js');
       videoElement.classList.add('vjs-big-play-centered');
 
       videoRef.current.appendChild(videoElement);

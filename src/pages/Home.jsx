@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { fetchTrending, fetchProviderContent } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
 import './Home.css';
@@ -38,6 +38,9 @@ const Home = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const trendingSliderRef = useRef(null);
+  const catalogSliderRefs = useRef({});
+
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
@@ -71,12 +74,6 @@ const Home = () => {
     loadCatalogs();
   }, []);
 
-  if (loading) return <div className="page-loader"><div className="spinner"></div></div>;
-  if (error) return <div className="error-message">{error}</div>;
-
-  const featuredMovie = trending[0];
-  const rowMovies = trending.slice(1);
-
   const sliderSettings = {
     dots: false,
     infinite: true,
@@ -94,6 +91,25 @@ const Home = () => {
       { breakpoint: 500, settings: { slidesToShow: 2, slidesToScroll: 1 } },
     ]
   };
+
+  const handleWheel = (e, sliderRef) => {
+    // Prevent default vertical scroll if they are scrolling heavily horizontally
+    if (!sliderRef || !sliderRef.current) return;
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      e.preventDefault();
+      if (e.deltaX > 0) {
+        sliderRef.current.slickNext();
+      } else {
+        sliderRef.current.slickPrev();
+      }
+    }
+  };
+
+  if (loading) return <div className="page-loader"><div className="spinner"></div></div>;
+  if (error) return <div className="error-message">{error}</div>;
+
+  const featuredMovie = trending[0];
+  const rowMovies = trending.slice(1);
 
   return (
     <div className="home-page fade-in">
@@ -121,8 +137,8 @@ const Home = () => {
 
       <section className="movies-row-section">
         <h2 className="row-title">Trending Now</h2>
-        <div className="slick-row">
-          <SlickSlider {...sliderSettings}>
+        <div className="slick-row" onWheel={(e) => handleWheel(e, trendingSliderRef)}>
+          <SlickSlider ref={trendingSliderRef} {...sliderSettings}>
             {rowMovies.map(movie => (
               <div key={movie.id} className="row-item-wrapper">
                 <MovieCard movie={movie} />
@@ -139,8 +155,11 @@ const Home = () => {
         return (
           <section key={catalogName} className="movies-row-section" style={{ marginTop: '3rem' }}>
             <h2 className="row-title">{catalogName}</h2>
-            <div className="slick-row">
-              <SlickSlider {...sliderSettings}>
+            <div className="slick-row" onWheel={(e) => {
+              if (!catalogSliderRefs.current[catalogName]) return;
+              handleWheel(e, { current: catalogSliderRefs.current[catalogName] });
+            }}>
+              <SlickSlider ref={el => catalogSliderRefs.current[catalogName] = el} {...sliderSettings}>
                 {catalogMovies.map(movie => (
                   <div key={movie.id} className="row-item-wrapper">
                     <MovieCard movie={movie} />

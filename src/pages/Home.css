@@ -89,6 +89,8 @@
 
 .slick-row {
   margin: 0 -10px;
+  overscroll-behavior-x: none; /* Prevents back/forward gesture on Mac trackpad */
+  touch-action: pan-y; /* Allows vertical scrolling, but hands horizontal off to our script */
 }
 
 .row-item-wrapper {
