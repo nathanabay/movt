@@ -3,9 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "start": "node server.js"
-  },
+  "scripts": {},
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
