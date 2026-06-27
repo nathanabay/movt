@@ -17,27 +17,51 @@ const PORT = process.env.PORT || 3000;
 // Enable CORS
 app.use(cors());
 
-// Configure proxies (matching vite.config.js behavior for production)
-app.use('/api/apibay', createProxyMiddleware({
-  target: 'https://apibay.org',
-  changeOrigin: true
-}));
+// Configure robust native proxies
+const proxyRequest = async (req, res, targetBase, apiType) => {
+  try {
+    const path = req.originalUrl.replace(/^\/api\/[^/]+/, '');
+    let targetUrl = targetBase + path;
+    
+    // Securely inject API keys on the backend so they aren't exposed in the frontend
+    if (apiType === 'tmdb' && process.env.VITE_TMDB_API_KEY) {
+      targetUrl = targetUrl.replace(/api_key=[^&]+/, `api_key=${process.env.VITE_TMDB_API_KEY}`);
+      if (!targetUrl.includes('api_key=')) {
+        targetUrl += (targetUrl.includes('?') ? '&' : '?') + `api_key=${process.env.VITE_TMDB_API_KEY}`;
+      }
+    }
 
-app.use('/api/torbox', createProxyMiddleware({
-  target: 'https://api.torbox.app/v1/api/torrents',
-  changeOrigin: true
-}));
+    const headers = {
+      'Accept': req.headers.accept || '*/*',
+      'User-Agent': 'Mozilla/5.0 (Node.js Proxy)'
+    };
 
-// Proxy TMDB API requests
-app.use('/api/tmdb', createProxyMiddleware({
-  target: 'https://api.themoviedb.org/3',
-  changeOrigin: true
-}));
+    if (apiType === 'torbox' && process.env.VITE_TORBOX_API_KEY) {
+      headers['Authorization'] = `Bearer ${process.env.VITE_TORBOX_API_KEY}`;
+    }
 
-app.use('/api/yts', createProxyMiddleware({
-  target: 'https://yts.mx/api/v2',
-  changeOrigin: true
-}));
+    const response = await fetch(targetUrl, {
+      method: req.method,
+      headers
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).send(await response.text());
+    }
+
+    const data = await response.text();
+    res.set('Content-Type', response.headers.get('content-type'));
+    res.send(data);
+  } catch (error) {
+    console.error('Proxy Error:', error);
+    res.status(500).json({ error: 'Proxy failed' });
+  }
+};
+
+app.use('/api/apibay', (req, res) => proxyRequest(req, res, 'https://apibay.org', 'apibay'));
+app.use('/api/torbox', (req, res) => proxyRequest(req, res, 'https://api.torbox.app/v1/api/torrents', 'torbox'));
+app.use('/api/tmdb', (req, res) => proxyRequest(req, res, 'https://api.themoviedb.org/3', 'tmdb'));
+app.use('/api/yts', (req, res) => proxyRequest(req, res, 'https://yts.mx/api/v2', 'yts'));
 
 // Serve static frontend files from the "dist" directory
 app.use(express.static(path.join(__dirname, 'dist')));
