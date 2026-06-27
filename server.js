@@ -16,6 +16,78 @@ const PORT = process.env.PORT || 3000;
 
 // Enable CORS
 app.use(cors());
+app.use(express.json());
+
+import jwt from 'jsonwebtoken';
+import { 
+  createUser, verifyUser, 
+  getWatchlist, addToWatchlist, removeFromWatchlist,
+  getHistory, updateHistory, removeFromHistory 
+} from './db.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-me';
+
+// Auth Middleware
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// --- API Routes ---
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const user = createUser(req.body.username, req.body.password);
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ token, user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const user = verifyUser(req.body.username, req.body.password);
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ token, user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/auth/me', authenticate, (req, res) => {
+  res.json({ user: req.user });
+});
+
+app.get('/api/watchlist', authenticate, (req, res) => {
+  res.json(getWatchlist(req.user.id));
+});
+
+app.post('/api/watchlist', authenticate, (req, res) => {
+  res.json(addToWatchlist(req.user.id, req.body.item));
+});
+
+app.delete('/api/watchlist/:mediaType/:itemId', authenticate, (req, res) => {
+  res.json(removeFromWatchlist(req.user.id, req.params.itemId, req.params.mediaType));
+});
+
+app.get('/api/history', authenticate, (req, res) => {
+  res.json(getHistory(req.user.id));
+});
+
+app.post('/api/history', authenticate, (req, res) => {
+  res.json(updateHistory(req.user.id, req.body.item, req.body.progress, req.body.duration, req.body.season, req.body.episode));
+});
+
+app.delete('/api/history/:mediaType/:itemId', authenticate, (req, res) => {
+  res.json(removeFromHistory(req.user.id, req.params.itemId, req.params.mediaType));
+});
 
 // Configure robust native proxies
 const proxyRequest = async (req, res, targetBase, apiType) => {

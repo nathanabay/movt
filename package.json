@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {},
   "dependencies": {
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.11.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^4.21.2",
     "http-proxy-middleware": "^3.0.7",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.21.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -17,5 +20,10 @@
     "slick-carousel": "^1.8.1",
     "torbox-api": "^1.0.0",
     "video.js": "^8.23.8"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jsonwebtoken": "^9.0.10"
   }
 }

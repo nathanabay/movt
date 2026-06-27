@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+set timeout 10
+spawn ssh -i /Users/nathanamare/Downloads/bespoet/besponate bespoet@bespo.et
+expect "*assword:*"
+send "aND1AND12$\r"
+expect "$ "
+send "mkdir -p /home/bespoet/repositories/movt/tmp && touch /home/bespoet/repositories/movt/tmp/restart.txt\r"
+expect "$ "
+send "exit\r"
+expect eof
