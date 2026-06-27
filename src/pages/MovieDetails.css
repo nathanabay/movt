@@ -608,3 +608,181 @@
   border-color: white;
   transform: scale(1.05);
 }
+
+/* Autoplay Overlay */
+.autoplay-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  color: white;
+}
+
+.autoplay-content {
+  text-align: center;
+}
+
+.autoplay-content h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+
+.autoplay-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.autoplay-buttons button {
+  padding: 0.8rem 2rem;
+  font-size: 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-play-now {
+  background-color: white;
+  color: black;
+}
+
+.btn-play-now:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.btn-cancel {
+  background-color: rgba(109, 109, 110, 0.7);
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: rgba(109, 109, 110, 0.5);
+}
+
+/* Player Episodes Dropdown */
+.player-top-right-controls {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  z-index: 60;
+}
+
+.btn-player-episodes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: white;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 10px 15px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+.btn-player-episodes:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.episodes-dropdown-menu {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 320px;
+  max-height: 400px;
+  background-color: rgba(20, 20, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.episodes-dropdown-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0,0,0,0.5);
+}
+
+.episodes-dropdown-header h4 {
+  margin: 0;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.episodes-dropdown-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Custom Scrollbar for dropdown */
+.episodes-dropdown-list::-webkit-scrollbar {
+  width: 8px;
+}
+.episodes-dropdown-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.episodes-dropdown-list::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+.episodes-dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+.episode-dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  gap: 1rem;
+}
+
+.episode-dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.episode-dropdown-item.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-left: 3px solid #e50914;
+}
+
+.episode-dropdown-item .ep-num {
+  font-size: 1.2rem;
+  color: #888;
+  font-weight: bold;
+  min-width: 25px;
+}
+
+.episode-dropdown-item.active .ep-num {
+  color: white;
+}
+
+.episode-dropdown-item .ep-name {
+  color: #ccc;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.episode-dropdown-item:hover .ep-name,
+.episode-dropdown-item.active .ep-name {
+  color: white;
+}

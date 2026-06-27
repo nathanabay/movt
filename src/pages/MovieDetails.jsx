@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
-import { Play, Download, X, Plus, ArrowLeft, Check } from 'lucide-react';
+import { Play, Download, X, Plus, ArrowLeft, Check, List } from 'lucide-react';
 import { getDetails, getTvSeasonDetails } from '../services/tmdb';
 import { searchTorbox } from '../services/torbox';
 import './MovieDetails.css';
@@ -16,19 +16,29 @@ const MovieDetails = ({ type }) => {
   const inList = isInWatchlist(Number(id));
   const [movie, setMovie] = useState(null);
   const [torrents, setTorrents] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [loadingTorrents, setLoadingTorrents] = useState(false);
   const [downloadedMagnets, setDownloadedMagnets] = useState(new Set());
+  const [currentSearchTitle, setCurrentSearchTitle] = useState('');
+  
+  const [torboxList, setTorboxList] = useState([]);
+
+
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [streamUrl, setStreamUrl] = useState(null);
   const [streamLoading, setStreamLoading] = useState(false);
   const playerRef = useRef(null);
   
+  // Binge Mode State
+  const [playingTvContext, setPlayingTvContext] = useState(null);
+  const [autoplayCountdown, setAutoplayCountdown] = useState(null);
+  const [showEpisodesDropdown, setShowEpisodesDropdown] = useState(false);
+  const countdownTimerRef = useRef(null);
+  
   // TV Show specific state
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [seasonData, setSeasonData] = useState(null);
   const [loadingSeason, setLoadingSeason] = useState(false);
-  const [currentSearchTitle, setCurrentSearchTitle] = useState(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -94,6 +104,20 @@ const MovieDetails = ({ type }) => {
     }
   };
 
+  const fetchMyTorboxList = async () => {
+    try {
+      const { getMyTorboxList } = await import('../services/torbox');
+      const list = await getMyTorboxList();
+      setTorboxList(list);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyTorboxList();
+  }, []);
+
   const handleDownload = async (magnet) => {
     try {
       alert('Adding torrent to TorBox...');
@@ -104,6 +128,8 @@ const MovieDetails = ({ type }) => {
         next.add(magnet);
         return next;
       });
+      // Refresh torbox list so episodes reflect the download instantly
+      setTimeout(() => fetchMyTorboxList(), 1500);
     } catch (err) {
       alert('Error adding torrent: ' + err.message);
     }
@@ -139,16 +165,45 @@ const MovieDetails = ({ type }) => {
   };
   const handleWatchEpisode = async (seasonNum, episodeNum) => {
     try {
+      if (autoplayCountdown !== null) setAutoplayCountdown(null);
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+      
       setStreamLoading(true);
       const showName = movie.title || movie.name;
       const { getEpisodeStreamUrl } = await import('../services/torbox');
       const url = await getEpisodeStreamUrl(showName, seasonNum, episodeNum);
+      setPlayingTvContext({ season: seasonNum, episode: episodeNum });
       setStreamUrl(url);
     } catch (err) {
       alert('Failed to stream episode: ' + err.message);
+      setAutoplayCountdown(null);
     } finally {
       setStreamLoading(false);
     }
+  };
+
+  const startAutoplayCountdown = (currentSeason, currentEpisode) => {
+    let nextSeason = currentSeason;
+    let nextEpisode = currentEpisode + 1;
+    
+    // Very basic check if we crossed season boundary (assumes current seasonData is loaded)
+    if (seasonData && seasonData.episodes && currentEpisode >= seasonData.episodes.length) {
+      nextSeason = currentSeason + 1;
+      nextEpisode = 1;
+    }
+
+    setAutoplayCountdown(5);
+    
+    countdownTimerRef.current = setInterval(() => {
+      setAutoplayCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownTimerRef.current);
+          handleWatchEpisode(nextSeason, nextEpisode);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
   const [isPlayerIdle, setIsPlayerIdle] = useState(false);
   const idleTimerRef = useRef(null);
@@ -157,7 +212,11 @@ const MovieDetails = ({ type }) => {
     setIsPlayerIdle(false);
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     idleTimerRef.current = setTimeout(() => {
-      setIsPlayerIdle(true);
+      setIsPlayerIdle((prev) => {
+        // If dropdown is open, do not idle
+        if (showEpisodesDropdown) return false;
+        return true;
+      });
     }, 3000);
   };
 
@@ -167,6 +226,7 @@ const MovieDetails = ({ type }) => {
     }
     return () => {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     };
   }, [streamUrl]);
 
@@ -213,6 +273,16 @@ const MovieDetails = ({ type }) => {
         lastSavedTime = ct;
       }
     });
+
+    player.on('ended', () => {
+      if (type === 'tv' && playingTvContext) {
+        // Exit fullscreen to show overlay safely, or just show overlay
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(e => console.log(e));
+        }
+        startAutoplayCountdown(playingTvContext.season, playingTvContext.episode);
+      }
+    });
   };
 
   if (streamUrl) {
@@ -223,17 +293,84 @@ const MovieDetails = ({ type }) => {
         onClick={handlePlayerMouseMove}
       >
         <div className={`player-top-overlay ${isPlayerIdle ? 'hidden' : ''}`}>
-          <button className="close-player-btn-new" onClick={() => setStreamUrl(null)}>
-            <ArrowLeft size={44} />
-          </button>
-          <div className="player-title-overlay">
-            {movie.title || movie.name}
+            <button className="close-player-btn-new" onClick={() => {
+              setStreamUrl(null);
+              setAutoplayCountdown(null);
+              if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+            }}>
+              <ArrowLeft size={44} />
+            </button>
+            <div className="player-title-overlay">
+              {movie.title || movie.name} {playingTvContext ? `(S${playingTvContext.season} E${playingTvContext.episode})` : ''}
+            </div>
+
+            {type === 'tv' && playingTvContext && seasonData && (
+              <div className="player-top-right-controls" onClick={(e) => e.stopPropagation()}>
+                <button 
+                  className="btn-player-episodes"
+                  onClick={() => setShowEpisodesDropdown(!showEpisodesDropdown)}
+                >
+                  <List size={20} /> Episodes
+                </button>
+                
+                {showEpisodesDropdown && (
+                  <div className="episodes-dropdown-menu fade-in">
+                    <div className="episodes-dropdown-header">
+                      <h4>Season {playingTvContext.season}</h4>
+                    </div>
+                    <div className="episodes-dropdown-list">
+                      {seasonData.episodes.map(ep => (
+                        <div 
+                          key={ep.id} 
+                          className={`episode-dropdown-item ${playingTvContext.episode === ep.episode_number ? 'active' : ''}`}
+                          onClick={() => {
+                            setShowEpisodesDropdown(false);
+                            if (playingTvContext.episode !== ep.episode_number) {
+                              handleWatchEpisode(playingTvContext.season, ep.episode_number);
+                            }
+                          }}
+                        >
+                          <span className="ep-num">{ep.episode_number}</span>
+                          <span className="ep-name">{ep.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </div>
-        
-        <div className="movie-player-container-fullscreen">
-          <VideoPlayer options={playerOptions} onReady={handlePlayerReady} />
-          {type === 'tv' && !isPlayerIdle && (
+          
+          <div className="movie-player-container-fullscreen">
+            <VideoPlayer options={playerOptions} onReady={handlePlayerReady} />
+            
+            {autoplayCountdown !== null && (
+              <div className="autoplay-overlay fade-in">
+                <div className="autoplay-content">
+                  <h2>Next Episode playing in {autoplayCountdown}...</h2>
+                  <div className="autoplay-buttons">
+                    <button className="btn-play-now" onClick={() => {
+                      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+                      // Instantly jump to 0 to trigger the switch
+                      setAutoplayCountdown(0);
+                      const nextEp = playingTvContext.episode + 1;
+                      handleWatchEpisode(playingTvContext.season, nextEp);
+                    }}>
+                      <Play fill="black" size={20} /> Play Now
+                    </button>
+                    <button className="btn-cancel" onClick={() => {
+                      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+                      setAutoplayCountdown(null);
+                      setStreamUrl(null);
+                    }}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {type === 'tv' && !isPlayerIdle && autoplayCountdown === null && (
             <button 
               className="btn-skip-intro fade-in"
               onClick={(e) => {
@@ -344,43 +481,73 @@ const MovieDetails = ({ type }) => {
               <div className="spinner-small"></div>
             ) : seasonData && seasonData.episodes ? (
               <div className="episodes-list">
-                {seasonData.episodes.map((episode) => (
-                  <div 
-                    key={episode.id} 
-                    className="episode-item"
-                    onClick={() => handleWatchEpisode(selectedSeason, episode.episode_number)}
-                  >
-                    <div className="episode-number">{episode.episode_number}</div>
-                    <div className="episode-thumbnail">
-                      {episode.still_path ? (
-                        <img src={`https://image.tmdb.org/t/p/w300${episode.still_path}`} alt={episode.name} />
-                      ) : (
-                        <div className="episode-no-image">No Image</div>
-                      )}
-                      <Play className="episode-play-icon" size={32} />
-                    </div>
-                    <div className="episode-info">
-                      <div className="episode-title-row">
-                        <h4>{episode.name}</h4>
-                        <span className="episode-runtime">{episode.runtime}m</span>
-                      </div>
-                      <p className="episode-overview">{episode.overview || 'No description available.'}</p>
-                    </div>
-                    <button 
-                      className="btn-download-netflix"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const s = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
-                        const ep = episode.episode_number < 10 ? `E0${episode.episode_number}` : `E${episode.episode_number}`;
-                        const query = `${movie.title || movie.name} ${s}${ep}`;
-                        fetchTorrents(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), movie.title || movie.name, query);
-                        document.getElementById('torbox-streams-section')?.scrollIntoView({ behavior: 'smooth' });
-                      }}
+                {seasonData.episodes.map((episode) => {
+                  
+                  // Check if this specific episode is available in TorBox cloud
+                  let isDownloaded = false;
+                  if (torboxList && torboxList.length > 0 && movie) {
+                    const showName = movie.title || movie.name;
+                    const nameRegex = new RegExp((showName || '').replace(/[^a-zA-Z0-9]/g, '.*'), 'i');
+                    const sStr = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
+                    const eStr = episode.episode_number < 10 ? `E0${episode.episode_number}` : `E${episode.episode_number}`;
+                    const epRegex = new RegExp(`[S]?0?${selectedSeason}[Ex]0?${episode.episode_number}`, 'i');
+                    
+                    for (const t of torboxList) {
+                      if (nameRegex.test(t.name) || (t.files && t.files.length > 0 && nameRegex.test(t.files[0].name))) {
+                        for (const f of t.files || []) {
+                          if (!f.name.match(/\.(mp4|mkv|avi|webm)$/i)) continue;
+                          if (epRegex.test(f.name) || f.name.includes(`${sStr}${eStr}`)) {
+                            isDownloaded = true;
+                            break;
+                          }
+                        }
+                      }
+                      if (isDownloaded) break;
+                    }
+                  }
+
+                  return (
+                    <div 
+                      key={episode.id} 
+                      className="episode-item"
+                      onClick={() => handleWatchEpisode(selectedSeason, episode.episode_number)}
                     >
-                      <Download size={20} />
-                    </button>
-                  </div>
-                ))}
+                      <div className="episode-number">{episode.episode_number}</div>
+                      <div className="episode-thumbnail">
+                        {episode.still_path ? (
+                          <img src={`https://image.tmdb.org/t/p/w300${episode.still_path}`} alt={episode.name} />
+                        ) : (
+                          <div className="episode-no-image">No Image</div>
+                        )}
+                        <Play className="episode-play-icon" size={32} />
+                      </div>
+                      <div className="episode-info">
+                        <div className="episode-title-row">
+                          <h4>{episode.name}</h4>
+                          <span className="episode-runtime">{episode.runtime}m</span>
+                        </div>
+                        <p className="episode-overview">{episode.overview || 'No description available.'}</p>
+                      </div>
+                      <button 
+                        className="btn-download-netflix"
+                        disabled={isDownloaded}
+                        style={{ opacity: isDownloaded ? 0.5 : 1, cursor: isDownloaded ? 'default' : 'pointer' }}
+                        title={isDownloaded ? "Available in TorBox Cloud" : "Find Torrents"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isDownloaded) return;
+                          const s = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
+                          const ep = episode.episode_number < 10 ? `E0${episode.episode_number}` : `E${episode.episode_number}`;
+                          const query = `${movie.title || movie.name} ${s}${ep}`;
+                          fetchTorrents(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), movie.title || movie.name, query);
+                          document.getElementById('torbox-streams-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                      >
+                        {isDownloaded ? <Check size={20} color="#46d369" /> : <Download size={20} />}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
           </div>

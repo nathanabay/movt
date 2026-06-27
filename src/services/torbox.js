@@ -228,3 +228,16 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
     throw err;
   }
 };
+
+export const getMyTorboxList = async () => {
+  try {
+    const res = await fetch(`/api/torbox/mylist`, {
+      headers: { 'Authorization': `Bearer ${TORBOX_API_KEY}` }
+    });
+    const data = await res.json();
+    return data.data || [];
+  } catch (err) {
+    console.error("Failed to fetch TorBox list:", err);
+    return [];
+  }
+};
