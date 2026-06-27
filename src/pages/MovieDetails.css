@@ -546,8 +546,10 @@
 
 .player-title-overlay {
   position: fixed;
-  bottom: 22px; /* aligns with bottom icons */
-  left: 260px; /* Play(50) + Skip(50) + Skip(50) + Volume(auto) ~ 260px */
+  bottom: 42px; /* Perfect vertical center of the 45px buttons (which sit at 20px) */
+  left: 50%;
+  transform: translate(-50%, 50%); /* Centers horizontally and vertically on the 42px anchor */
+  text-align: center;
   color: white;
   font-size: 1.3rem;
   font-weight: 500;
@@ -582,4 +584,27 @@
   .modal-title {
     font-size: 2rem;
   }
+}
+
+/* Skip Intro Button */
+.btn-skip-intro {
+  position: absolute;
+  bottom: 150px;
+  right: 40px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 10px 24px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 50;
+  transition: all 0.2s ease;
+}
+
+.btn-skip-intro:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  transform: scale(1.05);
 }

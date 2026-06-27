@@ -36,3 +36,10 @@ export const getTvSeasonDetails = async (tvId, seasonNumber) => {
   if (!res.ok) throw new Error('Failed to fetch season details');
   return res.json();
 };
+
+export const fetchMovieVideos = async (id, type = 'movie') => {
+  const res = await fetch(`${BASE_URL}/${type}/${id}/videos?api_key=${TMDB_API_KEY}`);
+  if (!res.ok) throw new Error('Failed to fetch videos');
+  const data = await res.json();
+  return data.results;
+};

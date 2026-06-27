@@ -1,21 +1,28 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
-import { Play, Download, X, Plus, ArrowLeft } from 'lucide-react';
+import { Play, Download, X, Plus, ArrowLeft, Check } from 'lucide-react';
 import { getDetails, getTvSeasonDetails } from '../services/tmdb';
 import { searchTorbox } from '../services/torbox';
 import './MovieDetails.css';
 
+import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
+
 const MovieDetails = ({ type }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { watchlist, toggleWatchlist, isInWatchlist } = useWatchlist();
+  const { saveProgress, getProgress } = useWatchHistory();
+  const inList = isInWatchlist(Number(id));
   const [movie, setMovie] = useState(null);
   const [torrents, setTorrents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingTorrents, setLoadingTorrents] = useState(false);
+  const [downloadedMagnets, setDownloadedMagnets] = useState(new Set());
   const [error, setError] = useState(null);
   const [streamUrl, setStreamUrl] = useState(null);
   const [streamLoading, setStreamLoading] = useState(false);
+  const playerRef = useRef(null);
   
   // TV Show specific state
   const [selectedSeason, setSelectedSeason] = useState(1);
@@ -92,6 +99,11 @@ const MovieDetails = ({ type }) => {
       alert('Adding torrent to TorBox...');
       const result = await import('../services/torbox').then(m => m.addTorrent(magnet));
       alert('Success! Torrent added to TorBox: ' + (result?.torrent_id || ''));
+      setDownloadedMagnets(prev => {
+        const next = new Set(prev);
+        next.add(magnet);
+        return next;
+      });
     } catch (err) {
       alert('Error adding torrent: ' + err.message);
     }
@@ -175,6 +187,34 @@ const MovieDetails = ({ type }) => {
   if (error) return <div className="error-message">{error}</div>;
   if (!movie) return <div className="error-message">Movie not found.</div>;
 
+  const handlePlayerReady = (player) => {
+    playerRef.current = player;
+    // Attempt to resume playback
+    const history = getProgress(movie.id);
+    if (history && history.currentTime && history.currentTime > 5) {
+      player.currentTime(history.currentTime);
+    }
+    
+    // Save progress periodically
+    let lastSavedTime = history?.currentTime || 0;
+    player.on('timeupdate', () => {
+      const ct = player.currentTime();
+      if (Math.abs(ct - lastSavedTime) > 5) { // Save roughly every 5 seconds
+        saveProgress(movie.id, {
+          id: movie.id,
+          title: movie.title || movie.name,
+          media_type: type,
+          poster_path: movie.poster_path,
+          backdrop_path: movie.backdrop_path,
+          overview: movie.overview,
+          currentTime: ct,
+          duration: isNaN(player.duration()) ? 0 : player.duration()
+        });
+        lastSavedTime = ct;
+      }
+    });
+  };
+
   if (streamUrl) {
     return (
       <div 
@@ -191,10 +231,22 @@ const MovieDetails = ({ type }) => {
           </div>
         </div>
         
-        {/* We add a center ripple element which we'll animate via CSS when VideoJS fires events (or we can just let VideoJS handle big play button) */}
-        
         <div className="movie-player-container-fullscreen">
-          <VideoPlayer options={playerOptions} />
+          <VideoPlayer options={playerOptions} onReady={handlePlayerReady} />
+          {type === 'tv' && !isPlayerIdle && (
+            <button 
+              className="btn-skip-intro fade-in"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (playerRef.current) {
+                  const p = playerRef.current;
+                  p.currentTime(p.currentTime() + 85);
+                }
+              }}
+            >
+              Skip Intro
+            </button>
+          )}
         </div>
       </div>
     );
@@ -216,11 +268,19 @@ const MovieDetails = ({ type }) => {
           <div className="modal-hero-content">
             <h1 className="modal-title">{movie.title || movie.name}</h1>
             <div className="modal-buttons">
-              <button className="btn-hero btn-play" onClick={handleWatchMovie} disabled={streamLoading}>
+              <button 
+                className="btn-hero btn-play" 
+                onClick={handleWatchMovie} 
+                disabled={streamLoading}
+              >
                 <Play fill="black" size={24} /> {streamLoading ? 'Connecting...' : 'Play'}
               </button>
-              <button className="btn-icon">
-                <Plus size={24} />
+              <button 
+                className="btn-icon" 
+                onClick={() => toggleWatchlist({ ...movie, media_type: type })}
+                title={inList ? "Remove from My List" : "Add to My List"}
+              >
+                {inList ? <Check size={24} /> : <Plus size={24} />}
               </button>
             </div>
           </div>
@@ -347,8 +407,13 @@ const MovieDetails = ({ type }) => {
                     <span className="torrent-seeders-netflix">S: {t.seeders}</span>
                   </div>
                 </div>
-                <button className="btn-download-netflix" onClick={() => handleDownload(t.magnet)}>
-                  <Download size={20} />
+                <button 
+                  className="btn-download-netflix" 
+                  disabled={downloadedMagnets.has(t.magnet)}
+                  style={{ opacity: downloadedMagnets.has(t.magnet) ? 0.5 : 1, cursor: downloadedMagnets.has(t.magnet) ? 'default' : 'pointer' }}
+                  onClick={() => handleDownload(t.magnet)}
+                >
+                  {downloadedMagnets.has(t.magnet) ? <Check size={20} color="#46d369" /> : <Download size={20} />}
                 </button>
               </div>
             ))}

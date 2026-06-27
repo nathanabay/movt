@@ -57,7 +57,7 @@
   z-index: 10 !important;
   background: transparent !important;
   background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%) !important;
-  height: 90px !important;
+  height: 130px !important;
   display: flex !important;
   align-items: flex-end;
   padding: 0 2% 20px 2% !important;
@@ -73,7 +73,8 @@
 /* Progress Control Timeline - positioned above buttons */
 .video-js .vjs-progress-control {
   position: absolute !important;
-  top: 15px !important;
+  bottom: 80px !important; /* Buttons end at 65px (20px padding + 45px height), 80px leaves 15px gap */
+  top: auto !important;
   left: 2% !important;
   right: 80px !important; /* Leave space for remaining time */
   width: auto !important;
@@ -120,7 +121,8 @@
   display: flex !important;
   align-items: center;
   justify-content: center;
-  margin-right: 5px;
+  margin-right: 20px !important; /* Netflix has spacious buttons */
+  outline: none !important; /* Remove white box outline on click */
 }
 
 .video-js .vjs-button > .vjs-icon-placeholder::before {
@@ -152,12 +154,13 @@
 .video-js .vjs-skip-forward-control .vjs-icon-placeholder::before {
   content: '' !important;
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   filter: invert(1); /* makes black svgs white */
+  opacity: 0.9;
 }
 
 /* Data URI for skip backward */
@@ -185,14 +188,17 @@
 /* Clean up the Time Display */
 .video-js .vjs-remaining-time {
   position: absolute !important;
-  top: 15px !important;
+  bottom: 80px !important; /* Align with progress bar */
+  top: auto !important;
   right: 2% !important;
   display: flex !important;
   align-items: center;
-  font-size: 1.3rem !important;
+  justify-content: flex-end;
+  width: 70px !important;
+  height: 20px !important;
+  font-size: 1.2rem !important;
   font-weight: 500;
   padding: 0;
-  line-height: 20px;
 }
 
 .video-js .vjs-time-divider,
@@ -217,7 +223,15 @@
   display: flex !important;
   align-items: center;
   width: auto !important;
+  height: 45px !important; /* Force to match button height so it doesn't float up */
+  margin-bottom: 0 !important;
+  margin-right: 30px !important;
 }
+
+.video-js .vjs-mute-control {
+  margin-right: 0 !important; /* Keep icon attached to volume slider */
+}
+
 .video-js .vjs-volume-level {
   background-color: #e50914 !important;
 }

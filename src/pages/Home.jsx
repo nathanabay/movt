@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { fetchTrending, fetchProviderContent } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
+import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
 import './Home.css';
 import { Play, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +41,10 @@ const Home = () => {
 
   const trendingSliderRef = useRef(null);
   const catalogSliderRefs = useRef({});
+
+  const { watchlist } = useWatchlist();
+  const { getContinueWatchingList } = useWatchHistory();
+  const continueWatching = getContinueWatchingList();
 
   useEffect(() => {
     const loadCatalogs = async () => {
@@ -135,10 +140,40 @@ const Home = () => {
         </section>
       )}
 
+      {continueWatching.length > 0 && (
+        <section className="movies-row-section">
+          <h2 className="row-title">Continue Watching</h2>
+          <div className="slick-row">
+            <SlickSlider {...sliderSettings} infinite={continueWatching.length > 6}>
+              {continueWatching.map(movie => (
+                <div key={movie.id} className="row-item-wrapper">
+                  <MovieCard movie={movie} type={movie.media_type || 'movie'} />
+                </div>
+              ))}
+            </SlickSlider>
+          </div>
+        </section>
+      )}
+
+      {watchlist.length > 0 && (
+        <section className="movies-row-section">
+          <h2 className="row-title">My List</h2>
+          <div className="slick-row">
+            <SlickSlider {...sliderSettings} infinite={watchlist.length > 6}>
+              {watchlist.map(movie => (
+                <div key={movie.id} className="row-item-wrapper">
+                  <MovieCard movie={movie} type={movie.media_type || 'movie'} />
+                </div>
+              ))}
+            </SlickSlider>
+          </div>
+        </section>
+      )}
+
       <section className="movies-row-section">
         <h2 className="row-title">Trending Now</h2>
         <div className="slick-row" onWheel={(e) => handleWheel(e, trendingSliderRef)}>
-          <SlickSlider ref={trendingSliderRef} {...sliderSettings}>
+          <SlickSlider ref={trendingSliderRef} {...sliderSettings} infinite={rowMovies.length > 6}>
             {rowMovies.map(movie => (
               <div key={movie.id} className="row-item-wrapper">
                 <MovieCard movie={movie} />
@@ -153,13 +188,13 @@ const Home = () => {
         if (!catalogMovies || catalogMovies.length === 0) return null;
         
         return (
-          <section key={catalogName} className="movies-row-section" style={{ marginTop: '3rem' }}>
+          <section key={catalogName} className="movies-row-section">
             <h2 className="row-title">{catalogName}</h2>
             <div className="slick-row" onWheel={(e) => {
               if (!catalogSliderRefs.current[catalogName]) return;
               handleWheel(e, { current: catalogSliderRefs.current[catalogName] });
             }}>
-              <SlickSlider ref={el => catalogSliderRefs.current[catalogName] = el} {...sliderSettings}>
+              <SlickSlider ref={el => catalogSliderRefs.current[catalogName] = el} {...sliderSettings} infinite={catalogMovies.length > 6}>
                 {catalogMovies.map(movie => (
                   <div key={movie.id} className="row-item-wrapper">
                     <MovieCard movie={movie} />
