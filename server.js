@@ -20,34 +20,23 @@ app.use(cors());
 // Configure proxies (matching vite.config.js behavior for production)
 app.use('/api/apibay', createProxyMiddleware({
   target: 'https://apibay.org',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/apibay': '',
-  },
+  changeOrigin: true
 }));
 
 app.use('/api/torbox', createProxyMiddleware({
   target: 'https://api.torbox.app/v1/api/torrents',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/torbox': '',
-  },
+  changeOrigin: true
 }));
 
+// Proxy TMDB API requests
 app.use('/api/tmdb', createProxyMiddleware({
-  target: 'https://api.themoviedb.org',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/tmdb': '/3',
-  },
+  target: 'https://api.themoviedb.org/3',
+  changeOrigin: true
 }));
 
 app.use('/api/yts', createProxyMiddleware({
   target: 'https://yts.mx/api/v2',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/yts': '',
-  },
+  changeOrigin: true
 }));
 
 // Serve static frontend files from the "dist" directory
