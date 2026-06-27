@@ -1,6 +1,7 @@
 import { TorboxApi } from 'torbox-api';
 
-const TORBOX_API_KEY = import.meta.env.VITE_TORBOX_API_KEY || 'your_torbox_api_key';
+const TORBOX_API_KEY = import.meta.env.VITE_TORBOX_API_KEY || 'de060e0f-17e0-4d03-aa55-a3296398e1fb';
+const BASE_URL = 'https://api.torbox.app/v1/api';
 
 const sdk = new TorboxApi({
   token: TORBOX_API_KEY,

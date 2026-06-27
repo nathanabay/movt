@@ -1,5 +1,5 @@
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || 'your_tmdb_api_key'; // Replace or use .env
-const BASE_URL = '/api/tmdb';
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || 'ad135a8e5c5b0915dd7a498e5416ca26'; 
+const BASE_URL = 'https://api.themoviedb.org/3';
 
 export const fetchTrending = async (type = 'movie') => {
   const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${TMDB_API_KEY}`);
