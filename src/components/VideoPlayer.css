@@ -1,0 +1,155 @@
+.player-ripple-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.ripple-icon-container {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.ripple-animate {
+  animation: ripplePop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes ripplePop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* -------------------------------------
+   NETFLIX VIDEO.JS THEME OVERRIDES 
+   ------------------------------------- */
+
+.video-js.vjs-fluid {
+  background-color: black;
+}
+
+/* Control Bar Base */
+.video-js .vjs-control-bar {
+  background: transparent !important;
+  background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%) !important;
+  height: 90px !important;
+  display: flex !important;
+  align-items: flex-end;
+  padding: 0 40px 30px 40px !important;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.video-js.vjs-has-started.vjs-user-active .vjs-control-bar,
+.video-js.vjs-paused .vjs-control-bar {
+  opacity: 1;
+}
+
+/* Progress Control Timeline */
+.video-js .vjs-progress-control {
+  position: absolute;
+  top: 0;
+  left: 40px;
+  right: 40px;
+  width: auto;
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.video-js .vjs-progress-holder {
+  height: 4px !important;
+  border-radius: 4px;
+  transition: height 0.2s ease;
+}
+
+.video-js .vjs-progress-control:hover .vjs-progress-holder {
+  height: 8px !important;
+}
+
+.video-js .vjs-play-progress {
+  background-color: #e50914 !important; /* Netflix Red */
+  border-radius: 4px;
+}
+
+.video-js .vjs-play-progress:before {
+  color: #e50914 !important; /* The drag handle */
+  font-size: 1.2em;
+  top: -0.3em;
+}
+
+.video-js .vjs-load-progress {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 4px;
+}
+.video-js .vjs-load-progress div {
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Buttons and Controls */
+.video-js .vjs-button {
+  width: 50px !important;
+}
+
+.video-js .vjs-icon-placeholder::before {
+  font-size: 2.2em;
+  line-height: 1.5;
+}
+
+/* Specific icons */
+.video-js .vjs-play-control, 
+.video-js .vjs-volume-panel, 
+.video-js .vjs-fullscreen-control, 
+.video-js .vjs-picture-in-picture-control {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.video-js .vjs-play-control:hover, 
+.video-js .vjs-volume-panel:hover, 
+.video-js .vjs-fullscreen-control:hover {
+  transform: scale(1.1);
+}
+
+/* Hide Time Divider and Current Time */
+.video-js .vjs-time-control {
+  display: flex;
+  align-items: center;
+  font-size: 1.3em;
+  font-weight: 500;
+  padding-bottom: 8px;
+}
+
+/* Hide Default Big Play Button since we implemented Ripple */
+.video-js .vjs-big-play-button {
+  display: none !important;
+}
+
+/* Volume Bar */
+.video-js .vjs-volume-level {
+  background-color: #e50914 !important;
+}
+.video-js .vjs-volume-level:before {
+  color: #e50914 !important;
+}

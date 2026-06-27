@@ -1,0 +1,167 @@
+.movie-card-container {
+  position: relative;
+  width: 100%;
+}
+
+.movie-card {
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-normal);
+}
+
+.movie-card-container.hovered .movie-card {
+  opacity: 0;
+}
+
+.movie-poster-container {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  aspect-ratio: 2/3;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.movie-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-normal);
+}
+
+.movie-title-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 20px 10px 10px 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.movie-title-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* Netflix Hover Portal Styles */
+.movie-card-portal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 160%;
+  background: #141414;
+  border-radius: 8px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+  z-index: 999;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.portal-backdrop-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+
+.portal-backdrop {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portal-title-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 20px 15px 10px 15px;
+  background: linear-gradient(to top, #141414, transparent);
+}
+
+.portal-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.portal-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.portal-buttons-left, .portal-buttons-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.btn-icon-play {
+  background: white;
+  color: black;
+}
+
+.btn-icon-play:hover {
+  background: rgba(255,255,255,0.8);
+}
+
+.btn-icon-secondary {
+  background: rgba(42,42,42,0.6);
+  color: white;
+  border-color: rgba(255,255,255,0.5);
+}
+
+.btn-icon-secondary:hover {
+  border-color: white;
+  background: rgba(42,42,42,0.9);
+}
+
+.portal-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.portal-meta .match-score {
+  color: #46d369;
+  font-weight: bold;
+}
+
+.portal-meta .age-limit {
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 0 0.3rem;
+  border-radius: 3px;
+}
+
+.portal-genres {
+  font-size: 0.8rem;
+  color: #a3a3a3;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.portal-genres span {
+  color: #e5e5e5;
+}

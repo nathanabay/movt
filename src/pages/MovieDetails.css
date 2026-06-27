@@ -1,0 +1,582 @@
+.movie-details-modal-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+  z-index: 2000;
+}
+
+.movie-details-modal {
+  width: 90%;
+  max-width: 850px;
+  background-color: #181818;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.7);
+  position: relative;
+  margin-top: 30px;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+  background: #181818;
+  color: white;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: #333;
+}
+
+.modal-hero {
+  height: 480px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.modal-hero-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, #181818 0%, transparent 50%);
+}
+
+.modal-hero-content {
+  position: absolute;
+  bottom: 5%;
+  left: 5%;
+  width: 90%;
+}
+
+.modal-title {
+  font-size: 3rem;
+  font-weight: 800;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.45);
+  margin-bottom: 1.5rem;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(42, 42, 42, 0.6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  border-color: white;
+  background: rgba(42, 42, 42, 0.9);
+}
+
+.modal-info-section {
+  padding: 0 5%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.match-score {
+  color: #46d369;
+  font-weight: bold;
+}
+
+.hd-badge, .runtime-badge {
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 0 0.4rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.9);
+}
+
+.modal-overview-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.modal-overview-metadata {
+  font-size: 0.95rem;
+  color: #777;
+}
+
+.modal-overview-metadata strong {
+  color: #fff;
+}
+
+.modal-overview-metada.torbox-section {
+  padding: 2rem 4rem;
+}
+
+.torbox-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.torbox-header h3 {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.torrents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.torrent-item-netflix {
+  display: flex;
+  align-items: center;
+  background: #181818;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  border-bottom: 1px solid #282828;
+  transition: background 0.2s;
+}
+
+.torrent-item-netflix:hover {
+  background: #232323;
+}
+
+.torrent-index {
+  font-size: 1.2rem;
+  color: #a3a3a3;
+  width: 40px;
+  font-weight: 300;
+}
+
+.torrent-info-netflix {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.torrent-name-netflix {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.torrent-meta-netflix {
+  font-size: 0.85rem;
+  color: #46d369; /* Netflix Match Green */
+  display: flex;
+  gap: 1rem;
+  font-weight: 500;
+}
+
+.torrent-seeders-netflix {
+  color: #a3a3a3;
+}
+
+.btn-download-netflix {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-download-netflix:hover {
+  border-color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Episodes Section Styling */
+.episodes-section {
+  padding: 2rem 4rem;
+  border-bottom: 1px solid #282828;
+}
+
+.episodes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.episodes-header h3 {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.season-select {
+  background: #242424;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.season-select:focus {
+  border-color: white;
+}
+
+.episodes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.episode-item {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid #282828;
+  border-radius: 4px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.episode-item:hover {
+  background: #232323;
+}
+
+.episode-number {
+  font-size: 1.5rem;
+  color: #a3a3a3;
+  width: 30px;
+  text-align: center;
+  font-weight: 300;
+}
+
+.episode-thumbnail {
+  position: relative;
+  width: 150px;
+  height: 84px; /* 16:9 aspect */
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #141414;
+}
+
+.episode-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.episode-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a3a3a3;
+  font-size: 0.8rem;
+  background: #141414;
+}
+
+.episode-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.episode-item:hover .episode-play-icon {
+  opacity: 1;
+}
+
+.episode-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.episode-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.episode-title-row h4 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.episode-runtime {
+  font-size: 0.9rem;
+  color: #a3a3a3;
+}
+
+.episode-overview {
+  font-size: 0.85rem;
+  color: #a3a3a3;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .episodes-section {
+    padding: 1rem 2rem;
+  }
+  
+  .episode-item {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .episode-thumbnail {
+    width: 120px;
+    height: 67px;
+  }
+  
+  .episode-overview {
+    -webkit-line-clamp: 3;
+  }
+}
+
+/* Similar Section Styling */
+.similar-section {
+  padding: 2rem 4rem 4rem;
+}
+
+.similar-header {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 2rem;
+}
+
+.similar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.similar-card {
+  background: #2f2f2f;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.similar-card:hover {
+  background: #404040;
+}
+
+.similar-card:hover .similar-play-icon {
+  opacity: 1;
+}
+
+.similar-poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.similar-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.similar-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid white;
+  border-radius: 50%;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.similar-info {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.similar-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.similar-badge {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 0 0.4rem;
+  border-radius: 3px;
+  color: #a3a3a3;
+}
+
+.similar-add-btn {
+  margin-left: auto;
+  color: #a3a3a3;
+  transition: color 0.2s;
+}
+
+.similar-add-btn:hover {
+  color: white;
+}
+
+.similar-overview {
+  font-size: 0.85rem;
+  color: #a3a3a3;
+  line-height: 1.4;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .similar-section {
+    padding: 1rem 2rem 3rem;
+  }
+}
+
+/* Full Screen Player */
+.full-screen-player {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+}
+
+.player-top-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 3010;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+  transition: opacity 0.5s ease-in-out;
+  opacity: 1;
+}
+
+.player-top-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.full-screen-player.player-idle {
+  cursor: none;
+}
+
+.close-player-btn-new {
+  background: transparent;
+  color: white;
+  border: none;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.close-player-btn-new:hover {
+  opacity: 1;
+}
+
+.player-title-overlay {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Ripple Animation Setup for play/pause */
+/* Moved to VideoPlayer.css */
+
+.movie-player-container-fullscreen {
+  width: 100%;
+  height: 100%;
+}
+
+.movie-player-container-fullscreen > div {
+  width: 100%;
+  height: 100%;
+}
+
+.video-js.vjs-fluid {
+  height: 100vh !important;
+  padding-top: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .modal-overview-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-hero {
+    height: 300px;
+  }
+  .modal-title {
+    font-size: 2rem;
+  }
+}
