@@ -1,0 +1,9 @@
+# movt
+Movt is a modern, responsive web application for exploring and discovering movies and TV shows.
+Users can view trending titles, search the catalog, read details, and stream available content.
+
+## Features
+- Search for any movie or TV show.
+- View trailers and details.
+- Build a personal watchlist.
+- View episode lists for TV shows.

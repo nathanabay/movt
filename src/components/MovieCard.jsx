@@ -37,8 +37,8 @@ const MovieCard = ({ movie }) => {
   };
 
   const imageUrl = movie.poster_path 
-    ? `https://image.tmdb.org/t/p/w185${movie.poster_path}`
-    : 'https://via.placeholder.com/185x278?text=No+Image';
+    ? `https://image.tmdb.org/t/p/w154${movie.poster_path}`
+    : 'https://via.placeholder.com/154x231?text=No+Image';
     
   const backdropUrl = movie.backdrop_path 
     ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}`
