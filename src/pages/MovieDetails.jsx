@@ -49,8 +49,8 @@ const MovieDetails = ({ type }) => {
         
         const imdbId = data.imdb_id || (data.external_ids && data.external_ids.imdb_id);
         if (data && imdbId) {
-          const year = data.release_date ? data.release_date.substring(0, 4) : (data.first_air_date ? data.first_air_date.substring(0, 4) : '');
-          const searchName = `${data.title || data.name} ${year}`.trim();
+          const year = data.release_date ? data.release_date.substring(0, 4) : '';
+          const searchName = type === 'tv' ? (data.title || data.name).trim() : `${data.title || data.name} ${year}`.trim();
           fetchTorrents(imdbId, searchName);
           setCurrentSearchTitle(type === 'tv' ? 'Global TorBox Streams (Whole Show)' : 'Streams');
         }
@@ -145,8 +145,8 @@ const MovieDetails = ({ type }) => {
         targetMagnet = torrents[0].magnet;
       } else {
         const imdbId = movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id);
-        const year = movie.release_date ? movie.release_date.substring(0, 4) : (movie.first_air_date ? movie.first_air_date.substring(0, 4) : '');
-        const searchName = `${movie.title || movie.name} ${year}`.trim();
+        const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
+        const searchName = type === 'tv' ? (movie.title || movie.name).trim() : `${movie.title || movie.name} ${year}`.trim();
         const data = await searchTorbox(imdbId, searchName);
         if (data && data.length > 0) {
           targetMagnet = data[0].magnet;
@@ -174,9 +174,8 @@ const MovieDetails = ({ type }) => {
       
       setStreamLoading(true);
       const showName = movie.title || movie.name;
-      const year = movie.release_date ? movie.release_date.substring(0, 4) : (movie.first_air_date ? movie.first_air_date.substring(0, 4) : '');
       const { getEpisodeStreamUrl } = await import('../services/torbox');
-      const url = await getEpisodeStreamUrl(showName, year, seasonNum, episodeNum);
+      const url = await getEpisodeStreamUrl(showName, seasonNum, episodeNum);
       setPlayingTvContext({ season: seasonNum, episode: episodeNum });
       setStreamUrl(url);
     } catch (err) {
@@ -471,9 +470,8 @@ const MovieDetails = ({ type }) => {
                   className="btn-download-netflix" 
                   style={{ width: 'auto', padding: '0 1rem', borderRadius: '4px', height: '38px', fontSize: '0.9rem', gap: '0.5rem' }}
                   onClick={() => {
-                    const year = movie.release_date ? movie.release_date.substring(0, 4) : (movie.first_air_date ? movie.first_air_date.substring(0, 4) : '');
                     const seasonStr = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
-                    const query = `${movie.title || movie.name} ${year} ${seasonStr}`.trim();
+                    const query = `${movie.title || movie.name} ${seasonStr}`.trim();
                     fetchTorrents(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), movie.title || movie.name, query);
                     document.getElementById('torbox-streams-section')?.scrollIntoView({ behavior: 'smooth' });
                   }}
@@ -542,10 +540,9 @@ const MovieDetails = ({ type }) => {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (isDownloaded) return;
-                          const year = movie.release_date ? movie.release_date.substring(0, 4) : (movie.first_air_date ? movie.first_air_date.substring(0, 4) : '');
                           const s = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
                           const ep = episode.episode_number < 10 ? `E0${episode.episode_number}` : `E${episode.episode_number}`;
-                          const query = `${movie.title || movie.name} ${year} ${s}${ep}`.trim();
+                          const query = `${movie.title || movie.name} ${s}${ep}`.trim();
                           fetchTorrents(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), movie.title || movie.name, query);
                           document.getElementById('torbox-streams-section')?.scrollIntoView({ behavior: 'smooth' });
                         }}

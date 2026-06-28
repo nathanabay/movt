@@ -1,0 +1,6 @@
+#!/usr/bin/expect -f
+set timeout 120
+spawn ssh -i /Users/nathanamare/Downloads/bespoet/besponate bespoet@bespo.et "cat /var/log/passenger-error.log || echo 'No passenger log'; cd /home/bespoet/repositories/movt && ls -la && npm install --production"
+expect "*assword:*"
+send "aND1AND12$\r"
+expect eof

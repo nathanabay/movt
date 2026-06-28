@@ -176,7 +176,7 @@ export const getStreamUrl = async (magnetLink) => {
   }
 };
 
-export const getEpisodeStreamUrl = async (showName, year, seasonNum, episodeNum) => {
+export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
   try {
     const sStr = seasonNum < 10 ? `S0${seasonNum}` : `S${seasonNum}`;
     const eStr = episodeNum < 10 ? `E0${episodeNum}` : `E${episodeNum}`;
@@ -225,7 +225,7 @@ export const getEpisodeStreamUrl = async (showName, year, seasonNum, episodeNum)
     }
 
     // 3. Fallback: Search APIBay for the individual episode magnet
-    const fallbackQuery = `${showName} ${year} ${sStr}${eStr}`.trim();
+    const fallbackQuery = `${showName} ${sStr}${eStr}`.trim();
     const searchData = await searchTorbox(null, fallbackQuery);
     if (!searchData || searchData.length === 0) {
       throw new Error(`No streams available for ${sStr}${eStr}`);
