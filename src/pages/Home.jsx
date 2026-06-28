@@ -49,22 +49,36 @@ const Home = () => {
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
-        const trendingData = await fetchTrending('movie');
+        const trendingPromise = fetchTrending('movie');
+        
+        const catalogPromises = PROVIDERS.flatMap(provider => [
+          fetchProviderContent(provider.id, 'movie').then(data => ({
+            name: `${provider.name} Movies`,
+            data: data.results
+          })).catch(err => {
+            console.error(`Failed to fetch ${provider.name} Movies`, err);
+            return null;
+          }),
+          fetchProviderContent(provider.id, 'tv').then(data => ({
+            name: `${provider.name} TV Shows`,
+            data: data.results
+          })).catch(err => {
+            console.error(`Failed to fetch ${provider.name} TV Shows`, err);
+            return null;
+          })
+        ]);
+
+        const [trendingData, ...catalogsResults] = await Promise.all([
+          trendingPromise,
+          ...catalogPromises
+        ]);
+
         setTrending(trendingData.results);
 
         const catalogsData = {};
-        for (const provider of PROVIDERS) {
-          try {
-            const movieData = await fetchProviderContent(provider.id, 'movie');
-            if (movieData.results && movieData.results.length > 0) {
-              catalogsData[`${provider.name} Movies`] = movieData.results;
-            }
-            const tvData = await fetchProviderContent(provider.id, 'tv');
-            if (tvData.results && tvData.results.length > 0) {
-              catalogsData[`${provider.name} TV Shows`] = tvData.results;
-            }
-          } catch (err) {
-            console.error(`Failed to fetch catalog for ${provider.name}`, err);
+        for (const result of catalogsResults) {
+          if (result && result.data && result.data.length > 0) {
+            catalogsData[result.name] = result.data;
           }
         }
         
