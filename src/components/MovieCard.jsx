@@ -52,9 +52,9 @@ const MovieCard = ({ movie }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Link to={linkPath} className="movie-card fade-in">
+      <Link to={linkPath} className="movie-card fade-in" tabIndex={-1}>
         <div className="movie-poster-container">
-          <img src={imageUrl} alt={movie.title} className="movie-poster" loading="lazy" />
+          <img src={imageUrl} alt={movie.title || movie.name || 'Movie Poster'} className="movie-poster" loading="lazy" />
           <div className="movie-title-overlay">
             <span className="movie-title-text">{movie.title || movie.name}</span>
           </div>

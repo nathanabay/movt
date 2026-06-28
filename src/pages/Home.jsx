@@ -133,12 +133,14 @@ const Home = () => {
   return (
     <div className="home-page fade-in">
       {featuredMovie && (
-        <section 
-          className="hero-section"
-          style={{
-            backgroundImage: `linear-gradient(to bottom, rgba(20,20,20,0.2), var(--bg-secondary)), url(https://image.tmdb.org/t/p/original${featuredMovie.backdrop_path})`
-          }}
-        >
+        <section className="hero-section">
+          <img 
+            src={`https://image.tmdb.org/t/p/w1280${featuredMovie.backdrop_path}`} 
+            alt={featuredMovie.title || featuredMovie.name || 'Hero Banner'} 
+            className="hero-backdrop-img"
+            fetchpriority="high"
+          />
+          <div className="hero-gradient-overlay"></div>
           <div className="hero-content">
             <h1 className="hero-title">{featuredMovie.title || featuredMovie.name}</h1>
             <p className="hero-subtitle">{featuredMovie.overview?.length > 150 ? featuredMovie.overview.substring(0, 150) + '...' : featuredMovie.overview}</p>
