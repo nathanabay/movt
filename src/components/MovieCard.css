@@ -165,3 +165,13 @@
 .portal-genres span {
   color: #e5e5e5;
 }
+
+@media (pointer: coarse), (max-width: 768px) {
+  /* On touch devices or mobile screens, disable the hover portal completely */
+  .movie-card-portal {
+    display: none !important;
+  }
+  .movie-card-container.hovered .movie-card {
+    opacity: 1 !important;
+  }
+}

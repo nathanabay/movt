@@ -158,13 +158,32 @@
 }
 
 @media (max-width: 768px) {
+  .hero-section {
+    min-height: 70vh;
+    height: auto;
+    padding-bottom: 2rem;
+  }
   .hero-content {
-    margin-left: 2rem;
+    margin-left: 1rem;
+    margin-top: 150px;
   }
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
   }
   .movies-row-section {
-    padding-left: 2rem;
+    padding-left: 1rem;
+    margin-top: -60px;
+  }
+  .movies-row-section ~ .movies-row-section {
+    margin-top: 2rem;
+  }
+  .row-title {
+    font-size: 1.2rem;
+  }
+  .slick-prev-custom, .slick-next-custom {
+    display: none !important; /* Hide custom arrows on mobile to rely on touch swipe */
   }
 }
