@@ -1,10 +1,6 @@
 #!/usr/bin/expect -f
 set timeout 120
-spawn ssh -i /Users/nathanamare/Downloads/bespoet/besponate bespoet@bespo.et
+spawn ssh -i /Users/nathanamare/Downloads/bespoet/besponate bespoet@bespo.et "cd /home/bespoet/repositories/movt && git reset --hard && git clean -fd && git pull && mkdir -p tmp && touch tmp/restart.txt"
 expect "*assword:*"
 send "aND1AND12$\r"
-expect "$ "
-send "cd /home/bespoet/repositories/movt && /home/bespoet/nodevenv/repositories/movt/22/bin/npm uninstall better-sqlite3 && /home/bespoet/nodevenv/repositories/movt/22/bin/npm install mysql2 bcrypt jsonwebtoken && git reset --hard && git clean -fd && git pull && mkdir -p tmp && touch tmp/restart.txt\r"
-expect "$ "
-send "exit\r"
 expect eof

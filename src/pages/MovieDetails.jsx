@@ -49,7 +49,9 @@ const MovieDetails = ({ type }) => {
         
         const imdbId = data.imdb_id || (data.external_ids && data.external_ids.imdb_id);
         if (data && imdbId) {
-          fetchTorrents(imdbId, data.title || data.name);
+          const year = data.release_date ? data.release_date.substring(0, 4) : (data.first_air_date ? data.first_air_date.substring(0, 4) : '');
+          const searchName = `${data.title || data.name} ${year}`.trim();
+          fetchTorrents(imdbId, searchName);
           setCurrentSearchTitle(type === 'tv' ? 'Global TorBox Streams (Whole Show)' : 'Streams');
         }
       } catch (err) {
@@ -143,7 +145,9 @@ const MovieDetails = ({ type }) => {
         targetMagnet = torrents[0].magnet;
       } else {
         const imdbId = movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id);
-        const data = await searchTorbox(imdbId, movie.title || movie.name);
+        const year = movie.release_date ? movie.release_date.substring(0, 4) : (movie.first_air_date ? movie.first_air_date.substring(0, 4) : '');
+        const searchName = `${movie.title || movie.name} ${year}`.trim();
+        const data = await searchTorbox(imdbId, searchName);
         if (data && data.length > 0) {
           targetMagnet = data[0].magnet;
         }
