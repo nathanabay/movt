@@ -7,7 +7,14 @@ const sdk = new TorboxApi({
   token: TORBOX_API_KEY,
 });
 
+const searchCache = new Map();
+
 export const searchTorbox = async (imdbId, title) => {
+  const cacheKey = `${imdbId}-${title}`;
+  if (searchCache.has(cacheKey)) {
+    return JSON.parse(JSON.stringify(searchCache.get(cacheKey)));
+  }
+
   let allTorrents = [];
   
   // 1. Try YTS
@@ -73,7 +80,8 @@ export const searchTorbox = async (imdbId, title) => {
     }
   }
 
-  return allTorrents;
+  searchCache.set(cacheKey, allTorrents);
+  return JSON.parse(JSON.stringify(allTorrents));
 };
 
 export const addTorrent = async (magnetLink) => {
@@ -230,13 +238,21 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
   }
 };
 
+let myTorboxListCache = null;
+let myTorboxListCacheTime = 0;
+
 export const getMyTorboxList = async () => {
   try {
+    if (myTorboxListCache && Date.now() - myTorboxListCacheTime < 60000) {
+      return myTorboxListCache; // Cache for 60 seconds
+    }
     const res = await fetch(`/api/torbox/mylist`, {
       headers: { 'Authorization': `Bearer ${TORBOX_API_KEY}` }
     });
     const data = await res.json();
-    return data.data || [];
+    myTorboxListCache = data.data || [];
+    myTorboxListCacheTime = Date.now();
+    return myTorboxListCache;
   } catch (err) {
     console.error("Failed to fetch TorBox list:", err);
     return [];

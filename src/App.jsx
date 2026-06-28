@@ -1,9 +1,19 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import MovieDetails from './pages/MovieDetails';
-import Search from './pages/Search';
 import './App.css';
+
+// Lazy load pages
+const Home = lazy(() => import('./pages/Home'));
+const MovieDetails = lazy(() => import('./pages/MovieDetails'));
+const Search = lazy(() => import('./pages/Search'));
+
+// Loading fallback
+const PageLoader = () => (
+  <div className="page-loader" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="spinner"></div>
+  </div>
+);
 
 function App() {
   return (
@@ -11,12 +21,14 @@ function App() {
       <div className="app">
         <Navbar />
         <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/movie/:id" element={<MovieDetails type="movie" />} />
-            <Route path="/tv/:id" element={<MovieDetails type="tv" />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/movie/:id" element={<MovieDetails type="movie" />} />
+              <Route path="/tv/:id" element={<MovieDetails type="tv" />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </Router>
