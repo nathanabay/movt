@@ -41,9 +41,9 @@ const authenticate = (req, res, next) => {
 };
 
 // --- API Routes ---
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   try {
-    const user = createUser(req.body.username, req.body.password);
+    const user = await createUser(req.body.username, req.body.password);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, user });
   } catch (err) {
@@ -51,9 +51,9 @@ app.post('/api/auth/register', (req, res) => {
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
-    const user = verifyUser(req.body.username, req.body.password);
+    const user = await verifyUser(req.body.username, req.body.password);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, user });
   } catch (err) {
@@ -65,28 +65,28 @@ app.get('/api/auth/me', authenticate, (req, res) => {
   res.json({ user: req.user });
 });
 
-app.get('/api/watchlist', authenticate, (req, res) => {
-  res.json(getWatchlist(req.user.id));
+app.get('/api/watchlist', authenticate, async (req, res) => {
+  res.json(await getWatchlist(req.user.id));
 });
 
-app.post('/api/watchlist', authenticate, (req, res) => {
-  res.json(addToWatchlist(req.user.id, req.body.item));
+app.post('/api/watchlist', authenticate, async (req, res) => {
+  res.json(await addToWatchlist(req.user.id, req.body.item));
 });
 
-app.delete('/api/watchlist/:mediaType/:itemId', authenticate, (req, res) => {
-  res.json(removeFromWatchlist(req.user.id, req.params.itemId, req.params.mediaType));
+app.delete('/api/watchlist/:mediaType/:itemId', authenticate, async (req, res) => {
+  res.json(await removeFromWatchlist(req.user.id, req.params.itemId, req.params.mediaType));
 });
 
-app.get('/api/history', authenticate, (req, res) => {
-  res.json(getHistory(req.user.id));
+app.get('/api/history', authenticate, async (req, res) => {
+  res.json(await getHistory(req.user.id));
 });
 
-app.post('/api/history', authenticate, (req, res) => {
-  res.json(updateHistory(req.user.id, req.body.item, req.body.progress, req.body.duration, req.body.season, req.body.episode));
+app.post('/api/history', authenticate, async (req, res) => {
+  res.json(await updateHistory(req.user.id, req.body.item, req.body.progress, req.body.duration, req.body.season, req.body.episode));
 });
 
-app.delete('/api/history/:mediaType/:itemId', authenticate, (req, res) => {
-  res.json(removeFromHistory(req.user.id, req.params.itemId, req.params.mediaType));
+app.delete('/api/history/:mediaType/:itemId', authenticate, async (req, res) => {
+  res.json(await removeFromHistory(req.user.id, req.params.itemId, req.params.mediaType));
 });
 
 // Configure robust native proxies
