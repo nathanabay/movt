@@ -4,6 +4,7 @@ import VideoPlayer from '../components/VideoPlayer';
 import { Play, Download, X, Plus, ArrowLeft, Check, List } from 'lucide-react';
 import { getDetails, getTvSeasonDetails } from '../services/tmdb';
 import { searchTorbox } from '../services/torbox';
+import { fetchSubtitles } from '../services/subtitles';
 import './MovieDetails.css';
 
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
@@ -26,6 +27,7 @@ const MovieDetails = ({ type }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [streamUrl, setStreamUrl] = useState(null);
+  const [subtitleUrl, setSubtitleUrl] = useState(null);
   const [streamLoading, setStreamLoading] = useState(false);
   const playerRef = useRef(null);
   
@@ -39,6 +41,10 @@ const MovieDetails = ({ type }) => {
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [seasonData, setSeasonData] = useState(null);
   const [loadingSeason, setLoadingSeason] = useState(false);
+
+  // Skip Intro State
+  const [introData, setIntroData] = useState(null);
+  const [showSkipIntro, setShowSkipIntro] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -160,6 +166,10 @@ const MovieDetails = ({ type }) => {
 
       const { getStreamUrl } = await import('../services/torbox');
       const url = await getStreamUrl(targetMagnet);
+      
+      const subUrl = await fetchSubtitles(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), 'movie');
+      setSubtitleUrl(subUrl);
+      
       setStreamUrl(url);
     } catch (err) {
       alert('Failed to stream movie: ' + err.message);
@@ -177,6 +187,12 @@ const MovieDetails = ({ type }) => {
       const { getEpisodeStreamUrl } = await import('../services/torbox');
       const url = await getEpisodeStreamUrl(showName, seasonNum, episodeNum);
       setPlayingTvContext({ season: seasonNum, episode: episodeNum });
+      // Mock intro fetch
+      setIntroData({ start: 5, end: 85 });
+      
+      const subUrl = await fetchSubtitles(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), 'tv', seasonNum, episodeNum);
+      setSubtitleUrl(subUrl);
+      
       setStreamUrl(url);
     } catch (err) {
       alert('Failed to stream episode: ' + err.message);
@@ -244,8 +260,9 @@ const MovieDetails = ({ type }) => {
         backward: 10
       }
     },
-    sources: [{ src: streamUrl, type: 'video/mp4' }]
-  }), [streamUrl]);
+    sources: [{ src: streamUrl, type: 'video/mp4' }],
+    subtitleUrl: subtitleUrl
+  }), [streamUrl, subtitleUrl]);
 
   if (loading) return <div className="page-loader"><div className="spinner"></div></div>;
   if (error) return <div className="error-message">{error}</div>;
@@ -275,6 +292,14 @@ const MovieDetails = ({ type }) => {
           duration: isNaN(player.duration()) ? 0 : player.duration()
         });
         lastSavedTime = ct;
+      }
+      
+      if (type === 'tv' && introData) {
+        if (ct >= introData.start && ct <= introData.end) {
+          setShowSkipIntro(true);
+        } else {
+          setShowSkipIntro(false);
+        }
       }
     });
 
@@ -374,14 +399,15 @@ const MovieDetails = ({ type }) => {
               </div>
             )}
 
-            {type === 'tv' && !isPlayerIdle && autoplayCountdown === null && (
+            {type === 'tv' && showSkipIntro && autoplayCountdown === null && (
             <button 
               className="btn-skip-intro fade-in"
               onClick={(e) => {
                 e.stopPropagation();
-                if (playerRef.current) {
+                if (playerRef.current && introData) {
                   const p = playerRef.current;
-                  p.currentTime(p.currentTime() + 85);
+                  p.currentTime(introData.end);
+                  setShowSkipIntro(false);
                 }
               }}
             >
@@ -414,7 +440,12 @@ const MovieDetails = ({ type }) => {
                 onClick={handleWatchMovie} 
                 disabled={streamLoading}
               >
-                <Play fill="black" size={24} /> {streamLoading ? 'Connecting...' : 'Play'}
+                <Play fill="black" size={24} /> 
+                {streamLoading ? 'Connecting...' : (
+                  getProgress(movie.id)?.currentTime > 60 
+                  ? `Resume from ${Math.floor(getProgress(movie.id).currentTime / 60)}:${('0' + Math.floor(getProgress(movie.id).currentTime % 60)).slice(-2)}` 
+                  : 'Play'
+                )}
               </button>
               <button 
                 className="btn-icon" 
@@ -572,7 +603,10 @@ const MovieDetails = ({ type }) => {
               <div key={idx} className="torrent-item-netflix">
                 <div className="torrent-index">{idx + 1}</div>
                 <div className="torrent-info-netflix">
-                  <h4 className="torrent-name-netflix">{t.name}</h4>
+                  <h4 className="torrent-name-netflix">
+                    {t.name}
+                    {t.isCached && <span style={{marginLeft: '8px', color: '#46d369', fontSize: '0.8rem', fontWeight: 'bold'}}>⚡ Instant Play</span>}
+                  </h4>
                   <div className="torrent-meta-netflix">
                     <span>{(t.size / 1024 / 1024 / 1024).toFixed(2)} GB</span>
                     <span className="torrent-seeders-netflix">S: {t.seeders}</span>

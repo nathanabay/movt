@@ -1,11 +1,3 @@
-import { TorboxApi } from 'torbox-api';
-
-const TORBOX_API_KEY = import.meta.env.VITE_TORBOX_API_KEY || 'de060e0f-17e0-4d03-aa55-a3296398e1fb';
-const BASE_URL = 'https://api.torbox.app/v1/api';
-
-const sdk = new TorboxApi({
-  token: TORBOX_API_KEY,
-});
 
 const searchCache = new Map();
 
@@ -80,6 +72,50 @@ export const searchTorbox = async (imdbId, title) => {
     }
   }
 
+  // Feature 1: Check Cached Torrents
+  if (allTorrents.length > 0) {
+    try {
+      const hashes = allTorrents.map(t => {
+        const match = t.magnet.match(/urn:btih:([^&]+)/i);
+        return match ? match[1].toLowerCase() : null;
+      }).filter(Boolean);
+
+      if (hashes.length > 0) {
+        // TorBox /checkcached takes a comma-separated list of hashes
+        const checkRes = await fetch(`/api/torbox/checkcached?hash=${hashes.join(',')}&format=list`);
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          const cachedList = checkData.data || [];
+          // Some versions of API return an array, some return an object mapped by hash.
+          // Let's handle both.
+          let cachedHashes = new Set();
+          if (Array.isArray(cachedList)) {
+            // usually it's an array of objects or strings, let's assume objects with hash or just strings
+            cachedList.forEach(item => {
+              if (typeof item === 'string') cachedHashes.add(item.toLowerCase());
+              else if (item.hash) cachedHashes.add(item.hash.toLowerCase());
+            });
+          } else if (typeof cachedList === 'object') {
+            Object.keys(cachedList).forEach(k => {
+              if (cachedList[k]) cachedHashes.add(k.toLowerCase());
+            });
+          }
+
+          allTorrents.forEach(t => {
+            const match = t.magnet.match(/urn:btih:([^&]+)/i);
+            if (match && cachedHashes.has(match[1].toLowerCase())) {
+              t.isCached = true;
+            } else {
+              t.isCached = false;
+            }
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to check cache:', err);
+    }
+  }
+
   searchCache.set(cacheKey, allTorrents);
   return JSON.parse(JSON.stringify(allTorrents));
 };
@@ -91,9 +127,6 @@ export const addTorrent = async (magnetLink) => {
     
     const response = await fetch('/api/torbox/createtorrent', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${TORBOX_API_KEY}`
-      },
       body: formData
     });
     
@@ -117,7 +150,6 @@ export const getStreamUrl = async (magnetLink) => {
     
     const addRes = await fetch('/api/torbox/createtorrent', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${TORBOX_API_KEY}` },
       body: formData
     });
     
@@ -130,17 +162,15 @@ export const getStreamUrl = async (magnetLink) => {
     // 2. Fetch Torrent List to find the file ID with polling
     let torrent = null;
     let retries = 0;
-    const maxRetries = 5;
+    const maxRetries = 30; // 60 seconds
     
     while (retries < maxRetries) {
-      const listRes = await fetch(`/api/torbox/mylist`, {
-        headers: { 'Authorization': `Bearer ${TORBOX_API_KEY}` }
-      });
+      const listRes = await fetch(`/api/torbox/mylist`);
       const listData = await listRes.json();
       const torrents = listData.data || [];
       torrent = torrents.find(t => t.id === torrentId || t.id === Number(torrentId));
       
-      if (torrent && torrent.files && torrent.files.length > 0) {
+      if (torrent && (torrent.download_state === 'cached' || torrent.download_state === 'completed') && torrent.files && torrent.files.length > 0) {
         break;
       }
       
@@ -152,16 +182,20 @@ export const getStreamUrl = async (magnetLink) => {
     }
     
     if (!torrent || !torrent.files || torrent.files.length === 0) {
-      throw new Error("Torrent files not found. The torrent might be dead, or TorBox is still downloading metadata. Please check your TorBox dashboard.");
+      throw new Error("Torrent files not found or still downloading. Please check your TorBox dashboard.");
     }
 
-    // Find the largest file (likely the video)
-    const videoFile = torrent.files.sort((a,b) => b.size - a.size)[0];
+    // Filter for valid video files
+    const validVideoFiles = torrent.files.filter(f => f.name.match(/\.(mp4|mkv|avi|webm)$/i));
+    if (validVideoFiles.length === 0) {
+      throw new Error("No playable video files found in this torrent.");
+    }
+
+    // Find the largest video file
+    const videoFile = validVideoFiles.sort((a,b) => b.size - a.size)[0];
 
     // 3. Request Stream Link
-    const streamRes = await fetch(`/api/torbox/requestdl?token=${TORBOX_API_KEY}&torrent_id=${torrentId}&file_id=${videoFile.id}&zip=false&torrent_file=false`, {
-      headers: { 'Authorization': `Bearer ${TORBOX_API_KEY}` }
-    });
+    const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${torrentId}&file_id=${videoFile.id}&zip=false&torrent_file=false`);
     const streamData = await streamRes.json();
     
     if (!streamData.success) {
@@ -182,9 +216,7 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
     const eStr = episodeNum < 10 ? `E0${episodeNum}` : `E${episodeNum}`;
     
     // 1. Fetch user's torrent list to see if they already have the season pack or episode
-    const listRes = await fetch(`/api/torbox/mylist`, {
-      headers: { 'Authorization': `Bearer ${TORBOX_API_KEY}` }
-    });
+    const listRes = await fetch(`/api/torbox/mylist`);
     const listData = await listRes.json();
     const torrents = listData.data || [];
 
@@ -193,7 +225,7 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
 
     // Build regexes to loosely match show name and strictly match episode
     const nameRegex = new RegExp(showName.replace(/[^a-zA-Z0-9]/g, '.*'), 'i');
-    const epRegex = new RegExp(`[S]?0?${seasonNum}[Ex]0?${episodeNum}`, 'i');
+    const epRegex = new RegExp(`(S0*${seasonNum}[Ex]0*${episodeNum}|${seasonNum}x0*${episodeNum}|Episode\\\\s*0*${episodeNum})`, 'i');
     
     // Search TorBox cache first
     for (const t of torrents) {
@@ -215,9 +247,7 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
 
     // 2. If found in cache, stream it instantly!
     if (matchedTorrentId && matchedFileId) {
-      const streamRes = await fetch(`/api/torbox/requestdl?token=${TORBOX_API_KEY}&torrent_id=${matchedTorrentId}&file_id=${matchedFileId}&zip=false&torrent_file=false`, {
-        headers: { 'Authorization': `Bearer ${TORBOX_API_KEY}` }
-      });
+      const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${matchedTorrentId}&file_id=${matchedFileId}&zip=false&torrent_file=false`);
       const streamData = await streamRes.json();
       if (streamData.success) {
         return streamData.data;
@@ -246,9 +276,7 @@ export const getMyTorboxList = async () => {
     if (myTorboxListCache && Date.now() - myTorboxListCacheTime < 60000) {
       return myTorboxListCache; // Cache for 60 seconds
     }
-    const res = await fetch(`/api/torbox/mylist`, {
-      headers: { 'Authorization': `Bearer ${TORBOX_API_KEY}` }
-    });
+    const res = await fetch(`/api/torbox/mylist`);
     const data = await res.json();
     myTorboxListCache = data.data || [];
     myTorboxListCacheTime = Date.now();

@@ -19,6 +19,15 @@ export const VideoPlayer = ({ options, onReady }) => {
       videoRef.current.appendChild(videoElement);
 
       const player = playerRef.current = videojs(videoElement, options, () => {
+        if (options.subtitleUrl) {
+          player.addRemoteTextTrack({
+            kind: 'captions',
+            src: options.subtitleUrl,
+            srclang: 'en',
+            label: 'English',
+            default: true
+          }, false);
+        }
         onReady && onReady(player);
       });
 
