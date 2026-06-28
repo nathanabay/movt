@@ -136,6 +136,8 @@ const Home = () => {
         <section className="hero-section">
           <img 
             src={`https://image.tmdb.org/t/p/w1280${featuredMovie.backdrop_path}`} 
+            srcSet={`https://image.tmdb.org/t/p/w780${featuredMovie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${featuredMovie.backdrop_path} 1280w, https://image.tmdb.org/t/p/original${featuredMovie.backdrop_path} 1920w`}
+            sizes="100vw"
             alt={featuredMovie.title || featuredMovie.name || 'Hero Banner'} 
             className="hero-backdrop-img"
             fetchpriority="high"
