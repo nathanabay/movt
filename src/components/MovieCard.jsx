@@ -54,8 +54,14 @@ const MovieCard = ({ movie }) => {
     >
       <Link to={linkPath} className="movie-card fade-in" tabIndex={-1}>
         <div className="movie-poster-container">
-          <img src={imageUrl} alt={movie.title || movie.name || 'Movie Poster'} className="movie-poster" loading="lazy" />
-          <div className="movie-title-overlay">
+          <img 
+          src={imageUrl} 
+          srcSet={movie.poster_path ? `https://image.tmdb.org/t/p/w92${movie.poster_path} 92w, https://image.tmdb.org/t/p/w154${movie.poster_path} 154w, https://image.tmdb.org/t/p/w185${movie.poster_path} 185w, https://image.tmdb.org/t/p/w342${movie.poster_path} 342w` : undefined}
+          sizes="(max-width: 768px) 105px, 150px"
+          alt={movie.title || movie.name} 
+          className="movie-poster"
+          loading="lazy"
+        />  <div className="movie-title-overlay">
             <span className="movie-title-text">{movie.title || movie.name}</span>
           </div>
         </div>
