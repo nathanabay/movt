@@ -41,16 +41,28 @@ const Home = () => {
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
-        const [trendingData, actionData, comedyData] = await Promise.all([
+        const [
+          trendingData, trendingTvData, actionData, comedyData, sciFiData, horrorData, romanceData, animationData
+        ] = await Promise.all([
           fetchTrending('movie'),
+          fetchTrending('tv'),
           fetchGenreContent(28, 'movie'),
-          fetchGenreContent(35, 'movie')
+          fetchGenreContent(35, 'movie'),
+          fetchGenreContent(878, 'movie'),
+          fetchGenreContent(27, 'movie'),
+          fetchGenreContent(10749, 'movie'),
+          fetchGenreContent(16, 'movie')
         ]);
 
         setTrending(trendingData.results);
         setCatalogs({
+          'Trending TV Shows': trendingTvData.results,
           'Top Rated Action': actionData.results,
-          'Top Rated Comedies': comedyData.results
+          'Top Rated Comedies': comedyData.results,
+          'Sci-Fi & Fantasy': sciFiData.results,
+          'Horror Movies': horrorData.results,
+          'Romance': romanceData.results,
+          'Animation': animationData.results
         });
       } catch (err) {
         setError(err.message);
