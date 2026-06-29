@@ -39,23 +39,27 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
         </div>
         
         {torrents && torrents.length > 0 && (
-          <div className="quality-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="quality-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative', zIndex: 100 }}>
             <label style={{ fontSize: '0.9rem', color: '#ccc' }}>Quality:</label>
             <select 
               value={selectedQuality}
+              onClick={(e) => e.stopPropagation()}
               onChange={(e) => setSelectedQuality(e.target.value)}
+              className="quality-dropdown-select"
               style={{
-                backgroundColor: 'rgba(255,255,255,0.1)',
+                backgroundColor: '#333',
                 color: '#fff',
                 border: '1px solid rgba(255,255,255,0.2)',
                 padding: '6px 12px',
                 borderRadius: '8px',
                 outline: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                WebkitAppearance: 'auto',
+                minWidth: '120px'
               }}
             >
               {availableQualities.map(q => (
-                <option key={q} value={q} style={{ color: '#000' }}>{q === 'All' ? 'All Qualities' : q}</option>
+                <option key={q} value={q} style={{ backgroundColor: '#333', color: '#fff' }}>{q === 'All' ? 'All Qualities' : q}</option>
               ))}
             </select>
           </div>
