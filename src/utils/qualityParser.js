@@ -1,19 +1,24 @@
 /**
- * Extracted and adapted from Sonarr's QualityParser.cs
- * Source: https://github.com/Sonarr/Sonarr/blob/develop/src/NzbDrone.Core/Parser/QualityParser.cs
+ * Extracted and adapted from custom movQualityParser.cs
  */
 
-// Note: Removed C# inline regex modifiers like (?-i) for JS compatibility
 const SourceRegex = new RegExp(
   "\\\\b(?:" +
-  "(?<bluray>BluRay|Blu-Ray|HD-?DVD|BDMux|BD(?!$))|" +
-  "(?<webdl>WEB[-_. ]DL(?:mux)?|WEBDL|AmazonHD|AmazonSD|iTunesHD|MaxdomeHD|NetflixU?HD|WebHD|HBOMaxHD|DisneyHD|[. ]WEB[. ](?:[xh][ .]?26[45]|AVC|HEVC|DDP?5[. ]1)|[. ]WEB$|(?:720|1080|2160)p[-. ]WEB[-. ]|[-. ]WEB[-. ](?:720|1080|2160)p|\\\\b\\\\s/\\\\sWEB\\\\s/\\\\s\\\\b|(?:AMZN|NF|DP)[. -]WEB[. -](?!Rip))|" +
+  "(?<bluray>M?Blu[-_. ]?Ray|HD[-_. ]?DVD|BD(?!$)|UHD2?BD|BDISO|BDMux|BD25|BD50|BR[-_. ]?DISK)|" +
+  "(?<webdl>WEB[-_. ]?DL(?:mux)?|AmazonHD|AmazonSD|iTunesHD|MaxdomeHD|NetflixU?HD|WebHD|HBOMaxHD|DisneyHD|[. ]WEB[. ](?:[xh][ .]?26[45]|AVC|HEVC|DDP?5[. ]1)|[. ]WEB$|(?:\\\\d{3,4}0p)[-. ](?:Hybrid[-_. ]?)?WEB[-. ]|[-. ]WEB[-. ]\\\\d{3,4}0p|\\\\b\\\\s/\\\\sWEB\\\\s/\\\\s\\\\b|(?:AMZN|NF|DP)[. -]WEB[. -](?!Rip))|" +
   "(?<webrip>WebRip|Web-Rip|WEBMux)|" +
   "(?<hdtv>HDTV)|" +
-  "(?<bdrip>BDRip|BDLight)|" +
+  "(?<bdrip>BDRip|BDLight|HD[-_. ]?DVDRip|UHDBDRip)|" +
   "(?<brrip>BRRip)|" +
-  "(?<dvd>DVD|DVDRip|NTSC|PAL|xvidvd)|" +
+  "(?<dvdr>\\\\d?x?M?DVD-?[R59])|" +
+  "(?<dvd>DVD(?!-R)|DVDRip|xvidvd)|" +
   "(?<dsr>WS[-_. ]DSR|DSR)|" +
+  "(?<regional>R[0-9]{1}|REGIONAL)|" +
+  "(?<scr>SCR|SCREENER|DVDSCR|DVDSCREENER)|" +
+  "(?<ts>TS[-_. ]|TELESYNCH?|HD-TS|HDTS|PDVD|TSRip|HDTSRip)|" +
+  "(?<tc>TC|TELECINE|HD-TC|HDTC)|" +
+  "(?<cam>CAMRIP|(?:NEW)?CAM|HD-?CAM(?:Rip)?|HQCAM)|" +
+  "(?<wp>WORKPRINT|WP)|" +
   "(?<pdtv>PDTV)|" +
   "(?<sdtv>SDTV)|" +
   "(?<tvrip>TVRip)" +
@@ -22,19 +27,19 @@ const SourceRegex = new RegExp(
 );
 
 const ResolutionRegex = new RegExp(
-  "\\\\b(?:(?<R360p>360p)|(?<R480p>480p|480i|640x480|848x480)|(?<R540p>540p)|(?<R576p>576p)|(?<R720p>720p|1280x720|960p)|(?<R1080p>1080p|1920x1080|1440p|FHD|1080i|4kto1080p)|(?<R2160p>2160p|3840x2160|4k[-_. ](?:UHD|HEVC|BD|H265)|(?:UHD|HEVC|BD|H265)[-_. ]4k))\\\\b",
+  "\\\\b(?:(?<R360p>360p)|(?<R480p>480p|480i|640x480|848x480)|(?<R540p>540p)|(?<R576p>576p)|(?<R720p>720p|1280x720|960p)|(?<R1080p>1080p|1920x1080|1440p|FHD|1080i|4kto1080p)|(?<R2160p>2160p|3840x2160|4k[-_. ](?:UHD|HEVC|BD|H\\\\.?265)|(?:UHD|HEVC|BD|H\\\\.?265)[-_. ]4k))\\\\b",
   "i"
 );
 
 const AlternativeResolutionRegex = new RegExp("\\\\b(?<R2160p>UHD)\\\\b|(?<R2160p>\\\\[4K\\\\])", "i");
 
 const CodecRegex = new RegExp(
-  "\\\\b(?:(?<x264>x264)|(?<h264>h264)|(?<x265>x265)|(?<h265>h265)|(?<hevc>hevc)|(?<xvidhd>XvidHD)|(?<xvid>Xvid)|(?<divx>divx))\\\\b",
+  "\\\\b(?:(?<x264>x264)|(?<h264>h264)|(?<x265>x265)|(?<h265>h265)|(?<hevc>hevc)|(?<xvidhd>XvidHD)|(?<xvid>X-?vid)|(?<divx>divx))\\\\b",
   "i"
 );
 
 const RemuxRegex = new RegExp(
-  "(?:[_. ]|\\\\d{4}p-|\\\\bHybrid-)?(?<remux>(?:(BD|UHD)[-_. ]?)?Remux)\\\\b|(?<remux>(?:(BD|UHD)[-_. ]?)?Remux[_. ]\\\\d{4}p)",
+  "(?:[_. \\\\[]|\\\\d{4}p-|\\\\bHybrid-)?(?<remux>(?:(BD|UHD)[-_. ]?)?Remux)\\\\b|(?<remux>(?:(BD|UHD)[-_. ]?)?Remux[_. ]\\\\d{4}p)",
   "i"
 );
 
@@ -43,11 +48,6 @@ const AudioRegex = new RegExp(
   "i"
 );
 
-/**
- * Parses a torrent/release name and returns structured quality data
- * @param {string} name - The raw release name
- * @returns {Object} { resolution, source, codec, audio, isRemux }
- */
 export const parseReleaseName = (name) => {
   const normalizedName = name.replace(/_/g, ' ').trim();
   
@@ -56,7 +56,8 @@ export const parseReleaseName = (name) => {
     source: 'Unknown',
     codec: 'Unknown',
     audio: 'Unknown',
-    isRemux: false
+    isRemux: false,
+    isCamOrTs: false // Flag to easily identify "bad" formats
   };
 
   // 1. Resolution
@@ -83,8 +84,14 @@ export const parseReleaseName = (name) => {
     else if (sourceMatch.groups.webrip) result.source = 'WEBRip';
     else if (sourceMatch.groups.hdtv) result.source = 'HDTV';
     else if (sourceMatch.groups.bdrip || sourceMatch.groups.brrip) result.source = 'BDRip';
-    else if (sourceMatch.groups.dvd) result.source = 'DVD';
+    else if (sourceMatch.groups.dvd || sourceMatch.groups.dvdr) result.source = 'DVD';
     else if (sourceMatch.groups.sdtv || sourceMatch.groups.pdtv || sourceMatch.groups.dsr || sourceMatch.groups.tvrip) result.source = 'SDTV';
+    else if (sourceMatch.groups.scr) { result.source = 'SCR'; result.isCamOrTs = true; }
+    else if (sourceMatch.groups.cam) { result.source = 'CAM'; result.isCamOrTs = true; }
+    else if (sourceMatch.groups.ts) { result.source = 'TS'; result.isCamOrTs = true; }
+    else if (sourceMatch.groups.tc) { result.source = 'TC'; result.isCamOrTs = true; }
+    else if (sourceMatch.groups.wp) { result.source = 'WP'; result.isCamOrTs = true; }
+    else if (sourceMatch.groups.regional) result.source = 'Regional';
   }
 
   // 3. Codec
@@ -95,7 +102,7 @@ export const parseReleaseName = (name) => {
     else if (codecMatch.groups.xvid || codecMatch.groups.xvidhd) result.codec = 'XviD';
   }
 
-  // 4. Audio (Added to complement video codecs)
+  // 4. Audio
   const audioMatch = AudioRegex.exec(normalizedName);
   if (audioMatch && audioMatch.groups) {
     if (audioMatch.groups.ac3) result.audio = 'AC3';
@@ -105,12 +112,12 @@ export const parseReleaseName = (name) => {
     else if (audioMatch.groups.flac) result.audio = 'FLAC';
   }
 
-  // 5. Remux (Lossless Rips)
+  // 5. Remux
   const remuxMatch = RemuxRegex.exec(normalizedName);
   if (remuxMatch) {
     result.isRemux = true;
     if (result.source === 'Unknown') {
-      result.source = 'BluRay'; // Remuxes are usually BluRay
+      result.source = 'BluRay';
     }
   }
 
