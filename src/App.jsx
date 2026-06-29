@@ -7,6 +7,7 @@ import './App.css';
 const Home = lazy(() => import('./pages/Home'));
 const MovieDetails = lazy(() => import('./pages/MovieDetails'));
 const Search = lazy(() => import('./pages/Search'));
+const TorboxList = lazy(() => import('./pages/TorboxList'));
 
 // Loading fallback
 const PageLoader = () => (
@@ -25,6 +26,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/search" element={<Search />} />
+              <Route path="/torbox" element={<TorboxList />} />
               <Route path="/movie/:id" element={<MovieDetails type="movie" />} />
               <Route path="/tv/:id" element={<MovieDetails type="tv" />} />
             </Routes>

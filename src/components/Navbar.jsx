@@ -61,6 +61,7 @@ const Navbar = () => {
         </form>
         <div className="navbar-links">
           <Link to="/" className="nav-link">Home</Link>
+          <Link to="/torbox" className="nav-link">Downloads</Link>
           <Link to="/watchlist" className="nav-link">Watchlist</Link>
           {user ? (
             <div className="nav-user">
