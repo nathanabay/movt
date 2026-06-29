@@ -23,6 +23,7 @@ import { useTvSeasons } from '../hooks/useTvSeasons';
 import { useTorboxSearch } from '../hooks/useTorboxSearch';
 import { useCastSpotlight } from '../hooks/useCastSpotlight';
 import { useTorboxStream } from '../hooks/useTorboxStream';
+import { buildLibraryMap } from '../services/mapper';
 
 const MovieDetails = ({ type }) => {
   const { id } = useParams();
@@ -53,6 +54,8 @@ const MovieDetails = ({ type }) => {
   // Skip Intro State
   const [showSkipIntro, setShowSkipIntro] = useState(false);
   const [isPiPActive, setIsPiPActive] = useState(false);
+
+  const mappedLibrary = useMemo(() => buildLibraryMap(torboxList), [torboxList]);
 
   const handleDownload = async (magnet) => {
     try {
@@ -439,7 +442,7 @@ const MovieDetails = ({ type }) => {
             fetchTorrents={fetchTorrents}
             loadingSeason={loadingSeason}
             seasonData={seasonData}
-            torboxList={torboxList}
+            mappedLibrary={mappedLibrary}
             handleWatchEpisode={handleWatchEpisode}
           />
         )}

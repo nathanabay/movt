@@ -3,7 +3,7 @@ import { Play, Download, Check } from 'lucide-react';
 
 const EpisodesList = ({ 
   movie, selectedSeason, setSelectedSeason, fetchTorrents, 
-  loadingSeason, seasonData, torboxList, handleWatchEpisode 
+  loadingSeason, seasonData, mappedLibrary, handleWatchEpisode 
 }) => {
   return (
     <div className="episodes-section">
@@ -42,28 +42,9 @@ const EpisodesList = ({
         <div className="episodes-list">
           {seasonData.episodes.map((episode) => {
             
-            // Check if this specific episode is available in TorBox cloud
-            let isDownloaded = false;
-            if (torboxList && torboxList.length > 0 && movie) {
-              const showName = movie.title || movie.name;
-              const nameRegex = new RegExp((showName || '').replace(/[^a-zA-Z0-9]/g, '.*'), 'i');
-              const sStr = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
-              const eStr = episode.episode_number < 10 ? `E0${episode.episode_number}` : `E${episode.episode_number}`;
-              const epRegex = new RegExp(`[S]?0?${selectedSeason}[Ex]0?${episode.episode_number}`, 'i');
-              
-              for (const t of torboxList) {
-                if (nameRegex.test(t.name) || (t.files && t.files.length > 0 && nameRegex.test(t.files[0].name))) {
-                  for (const f of t.files || []) {
-                    if (!f.name.match(/\\.(mp4|mkv|avi|webm)$/i)) continue;
-                    if (epRegex.test(f.name) || f.name.includes(`${sStr}${eStr}`)) {
-                      isDownloaded = true;
-                      break;
-                    }
-                  }
-                }
-                if (isDownloaded) break;
-              }
-            }
+            // Fast O(1) check
+            const showKey = (movie.title || movie.name || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            const isDownloaded = !!mappedLibrary?.[showKey]?.[selectedSeason]?.[episode.episode_number];
 
             return (
               <div 

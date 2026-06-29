@@ -305,50 +305,34 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum, signa
     const sStr = seasonNum < 10 ? `S0${seasonNum}` : `S${seasonNum}`;
     const eStr = episodeNum < 10 ? `E0${episodeNum}` : `E${episodeNum}`;
     
-    // 1. Fetch user's torrent list to see if they already have the season pack or episode
+    // 1. Fetch user's torrent list
     const listRes = await fetch(`/api/torbox/mylist`, { signal });
     const listData = await listRes.json();
     const torrents = listData.data || [];
 
-    let matchedTorrentId = null;
-    let matchedFileId = null;
-
-    // Build regexes to loosely match show name and strictly match episode
-    const nameRegex = new RegExp(showName.replace(/[^a-zA-Z0-9]/g, '.*'), 'i');
-    const epRegex = new RegExp(`(S0*${seasonNum}[Ex]0*${episodeNum}|${seasonNum}x0*${episodeNum}|Episode\\\\s*0*${episodeNum})`, 'i');
+    // 2. Build Library Map
+    const { buildLibraryMap } = await import('./mapper.js');
+    const libraryMap = buildLibraryMap(torrents);
     
-    // Search TorBox cache first
-    for (const t of torrents) {
-      if (nameRegex.test(t.name) || (t.files && t.files.length > 0 && nameRegex.test(t.files[0].name))) {
-        // If it's a season pack or episode pack, look through files
-        for (const f of t.files || []) {
-          // Check if file is video
-          if (!f.name.match(/\.(mp4|mkv|avi|webm)$/i)) continue;
-          
-          if (epRegex.test(f.name) || f.name.includes(`${sStr}${eStr}`)) {
-            matchedTorrentId = t.id;
-            matchedFileId = f.id;
-            break;
-          }
-        }
-      }
-      if (matchedFileId) break;
-    }
+    const showKey = (showName || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-    // 2. If found in cache, stream it instantly!
-    if (matchedTorrentId && matchedFileId) {
-      const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${matchedTorrentId}&file_id=${matchedFileId}&zip=false&torrent_file=false`, { signal });
+    // 3. O(1) Lookup
+    const matched = libraryMap[showKey]?.[seasonNum]?.[episodeNum];
+
+    // 4. If found, stream it
+    if (matched) {
+      const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${matched.torrent_id}&file_id=${matched.file_id}&zip=false&torrent_file=false`, { signal });
       const streamData = await streamRes.json();
       if (streamData.success) {
         return {
           url: streamData.data,
-          torrentId: matchedTorrentId,
-          files: torrents.find(t => t.id === matchedTorrentId)?.files || []
+          torrentId: matched.torrent_id,
+          files: torrents.find(t => t.id === matched.torrent_id)?.files || []
         };
       }
     }
 
-    // 3. Fallback: Search APIBay for the individual episode magnet
+    // 5. Fallback: Search APIBay for the individual episode magnet
     const fallbackQuery = `${showName} ${sStr}${eStr}`.trim();
     const searchData = await searchTorbox(null, fallbackQuery);
     if (!searchData || searchData.length === 0) {
