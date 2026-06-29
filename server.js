@@ -15,8 +15,17 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS
-app.use(cors());
+const allowedOrigins = ['https://mov.bespo.et', 'http://localhost:5173', 'http://localhost:3000'];
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // --- Rate Limiting ---
