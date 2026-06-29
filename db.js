@@ -70,10 +70,10 @@ const initDB = async (retries = 5, delay = 5000) => {
       console.error(`Database Initialization failed: ${err.message}. Retries left: ${retries - 1}`);
       retries -= 1;
       if (retries === 0) {
-        console.error('Fatal: Could not connect to database after maximum retries. Exiting process.');
-        process.exit(1);
+        console.error('Fatal: Could not connect to database after maximum retries. Continuing anyway, but queries will fail.');
+      } else {
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-      await new Promise(resolve => setTimeout(resolve, delay));
     } finally {
       if (connection) connection.release();
     }
