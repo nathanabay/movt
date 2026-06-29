@@ -122,7 +122,33 @@ export const searchTorbox = async (imdbId, title) => {
     }
   }
 
+  // Smart Audio/Video Codec Sorting (Prioritize MP4/AAC, Deprioritize AC3/MKV)
   if (allTorrents.length > 0) {
+    allTorrents = allTorrents.sort((a, b) => {
+      if (a.isCached && !b.isCached) return -1;
+      if (!a.isCached && b.isCached) return 1;
+
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+
+      const getScore = (name) => {
+        let score = 0;
+        if (name.includes('mp4')) score += 10;
+        if (name.includes('aac')) score += 10;
+        if (name.includes('webrip') || name.includes('web-dl')) score += 5;
+        if (name.includes('ac3') || name.includes('eac3')) score -= 20;
+        if (name.includes('dts') || name.includes('truehd')) score -= 20;
+        if (name.includes('mkv')) score -= 10;
+        return score;
+      };
+
+      const scoreA = getScore(aName);
+      const scoreB = getScore(bName);
+
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      return b.seeders - a.seeders;
+    });
+
     if (searchCache.size >= MAX_CACHE_SIZE) {
       const oldestKey = searchCache.keys().next().value;
       searchCache.delete(oldestKey);
@@ -217,8 +243,14 @@ export const getStreamUrl = async (magnetLink, signal = null) => {
       throw new Error("No playable video files found in this torrent.");
     }
 
-    // Find the largest video file to default to
-    const videoFile = validVideoFiles.sort((a,b) => b.size - a.size)[0];
+    // Find the largest video file, heavily prioritizing .mp4 over .mkv to avoid AC3 audio issues
+    const videoFile = validVideoFiles.sort((a,b) => {
+      const aIsMp4 = a.name.toLowerCase().endsWith('.mp4');
+      const bIsMp4 = b.name.toLowerCase().endsWith('.mp4');
+      if (aIsMp4 && !bIsMp4) return -1;
+      if (!aIsMp4 && bIsMp4) return 1;
+      return b.size - a.size; // fallback to largest file
+    })[0];
 
     // 3. Request Stream Link
     if (signal && signal.aborted) throw new Error('Aborted');
