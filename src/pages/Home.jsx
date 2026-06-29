@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { fetchTrending, fetchGenreContent, fetchPopular, fetchTopRated, fetchUpcoming } from '../services/tmdb';
+import { fetchTrending, fetchGenreContent, fetchPopular, fetchTopRated, fetchUpcoming, fetchNowPlaying, fetchOnTheAir, fetchAiringToday, fetchAnime, fetchKDramas } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
 import './Home.css';
@@ -43,6 +43,7 @@ const Home = () => {
       try {
         const [
           trendingData, trendingTvData, popularMoviesData, topRatedMoviesData, upcomingMoviesData, popularTvData, topRatedTvData,
+          nowPlayingData, onTheAirData, airingTodayData, animeData, kDramaData,
           actionData, comedyData, sciFiData, horrorData, romanceData, animationData,
           dramaData, thrillerData, crimeData, mysteryData, documentaryData,
           familyData, historyData, musicData, warData, westernData,
@@ -55,6 +56,11 @@ const Home = () => {
           fetchUpcoming(),
           fetchPopular('tv'),
           fetchTopRated('tv'),
+          fetchNowPlaying(),
+          fetchOnTheAir(),
+          fetchAiringToday(),
+          fetchAnime(),
+          fetchKDramas(),
           fetchGenreContent(28, 'movie'),
           fetchGenreContent(35, 'movie'),
           fetchGenreContent(878, 'movie'),
@@ -78,20 +84,25 @@ const Home = () => {
 
         setTrending(trendingData.results);
         setCatalogs({
+          'Now Playing in Theaters': nowPlayingData.results,
           'Popular Movies': popularMoviesData.results,
           'Popular TV Shows': popularTvData.results,
+          'On The Air': onTheAirData.results,
           'Top Rated Movies': topRatedMoviesData.results,
           'Top Rated TV Shows': topRatedTvData.results,
           'Upcoming Movies': upcomingMoviesData.results,
           'Trending TV Shows': trendingTvData.results,
+          'Airing Today': airingTodayData.results,
           'Top Rated Action': actionData.results,
           'Top Rated Comedies': comedyData.results,
-          'Drama': dramaData.results,
           'Sci-Fi & Fantasy': sciFiData.results,
+          'Horror Movies': horrorData.results,
           'Thriller': thrillerData.results,
           'Crime': crimeData.results,
-          'Horror Movies': horrorData.results,
           'Mystery': mysteryData.results,
+          'Drama': dramaData.results,
+          'Anime': animeData.results,
+          'K-Dramas': kDramaData.results,
           'Romance': romanceData.results,
           'Family Movies': familyData.results,
           'Animation': animationData.results,

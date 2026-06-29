@@ -84,3 +84,38 @@ export const fetchUpcoming = async () => {
   copy.results = copy.results.map(item => ({ ...item, media_type: 'movie' }));
   return copy;
 };
+
+export const fetchNowPlaying = async () => {
+  const data = await fetchWithCache(`${BASE_URL}/movie/now_playing?api_key=${TMDB_API_KEY}`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: 'movie' }));
+  return copy;
+};
+
+export const fetchOnTheAir = async () => {
+  const data = await fetchWithCache(`${BASE_URL}/tv/on_the_air?api_key=${TMDB_API_KEY}`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: 'tv' }));
+  return copy;
+};
+
+export const fetchAiringToday = async () => {
+  const data = await fetchWithCache(`${BASE_URL}/tv/airing_today?api_key=${TMDB_API_KEY}`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: 'tv' }));
+  return copy;
+};
+
+export const fetchAnime = async () => {
+  const data = await fetchWithCache(`${BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&with_genres=16&with_original_language=ja&sort_by=popularity.desc`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: 'tv' }));
+  return copy;
+};
+
+export const fetchKDramas = async () => {
+  const data = await fetchWithCache(`${BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&with_original_language=ko&sort_by=popularity.desc`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: 'tv' }));
+  return copy;
+};
