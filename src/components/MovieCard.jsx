@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Star, Play, Plus, ThumbsUp, ChevronDown, Check } from 'lucide-react';
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { fetchMovieVideos } from '../services/tmdb';
 import { useWatchlist } from '../hooks/useUserData';
 import './MovieCard.css';
@@ -124,4 +124,4 @@ const MovieCard = ({ movie }) => {
   );
 };
 
-export default MovieCard;
+export default React.memo(MovieCard, (prev, next) => prev.movie.id === next.movie.id);

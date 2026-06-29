@@ -4,7 +4,7 @@ import 'video.js/dist/video-js.css';
 import { Play, Pause } from 'lucide-react';
 import './VideoPlayer.css';
 
-export const VideoPlayer = ({ options, onReady }) => {
+export const VideoPlayer = React.memo(({ options, onReady }) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
   const [ripple, setRipple] = useState(null); // 'play' or 'pause'
@@ -73,6 +73,6 @@ export const VideoPlayer = ({ options, onReady }) => {
       )}
     </div>
   );
-};
+});
 
 export default VideoPlayer;

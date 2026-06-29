@@ -2,7 +2,8 @@ import { useState, useEffect, createContext, useContext, useMemo } from 'react';
 import debounce from 'lodash.debounce';
 import { useAuth } from '../context/AuthContext';
 
-const UserDataContext = createContext();
+const WatchlistContext = createContext();
+const HistoryContext = createContext();
 
 const WATCHLIST_KEY = 'movt_watchlist';
 const HISTORY_KEY = 'movt_watch_history';
@@ -157,40 +158,36 @@ export const UserDataProvider = ({ children }) => {
       });
   };
 
-  const value = useMemo(() => ({
+  const watchlistValue = useMemo(() => ({
     watchlist,
     toggleWatchlist,
-    isInWatchlist,
+    isInWatchlist
+  }), [watchlist]);
+
+  const historyValue = useMemo(() => ({
     history,
     saveProgress,
     getProgress,
     getContinueWatchingList
-  }), [watchlist, history]);
+  }), [history]);
 
   return (
-    <UserDataContext.Provider value={value}>
-      {children}
-    </UserDataContext.Provider>
+    <WatchlistContext.Provider value={watchlistValue}>
+      <HistoryContext.Provider value={historyValue}>
+        {children}
+      </HistoryContext.Provider>
+    </WatchlistContext.Provider>
   );
 };
 
 export const useWatchlist = () => {
-  const context = useContext(UserDataContext);
+  const context = useContext(WatchlistContext);
   if (!context) throw new Error('useWatchlist must be used within UserDataProvider');
-  return { 
-    watchlist: context.watchlist, 
-    toggleWatchlist: context.toggleWatchlist, 
-    isInWatchlist: context.isInWatchlist 
-  };
+  return context;
 };
 
 export const useWatchHistory = () => {
-  const context = useContext(UserDataContext);
+  const context = useContext(HistoryContext);
   if (!context) throw new Error('useWatchHistory must be used within UserDataProvider');
-  return { 
-    history: context.history, 
-    saveProgress: context.saveProgress, 
-    getProgress: context.getProgress, 
-    getContinueWatchingList: context.getContinueWatchingList 
-  };
+  return context;
 };
