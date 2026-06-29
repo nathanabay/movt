@@ -63,3 +63,24 @@ export const fetchGenreContent = async (genreId, type = 'movie') => {
   copy.results = copy.results.map(item => ({ ...item, media_type: type }));
   return copy;
 };
+
+export const fetchPopular = async (type = 'movie') => {
+  const data = await fetchWithCache(`${BASE_URL}/${type}/popular?api_key=${TMDB_API_KEY}`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: type }));
+  return copy;
+};
+
+export const fetchTopRated = async (type = 'movie') => {
+  const data = await fetchWithCache(`${BASE_URL}/${type}/top_rated?api_key=${TMDB_API_KEY}`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: type }));
+  return copy;
+};
+
+export const fetchUpcoming = async () => {
+  const data = await fetchWithCache(`${BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: 'movie' }));
+  return copy;
+};

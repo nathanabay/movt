@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { fetchTrending, fetchGenreContent } from '../services/tmdb';
+import { fetchTrending, fetchGenreContent, fetchPopular, fetchTopRated, fetchUpcoming } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
 import './Home.css';
@@ -42,13 +42,19 @@ const Home = () => {
     const loadCatalogs = async () => {
       try {
         const [
-          trendingData, trendingTvData, actionData, comedyData, sciFiData, horrorData, romanceData, animationData,
+          trendingData, trendingTvData, popularMoviesData, topRatedMoviesData, upcomingMoviesData, popularTvData, topRatedTvData,
+          actionData, comedyData, sciFiData, horrorData, romanceData, animationData,
           dramaData, thrillerData, crimeData, mysteryData, documentaryData,
           familyData, historyData, musicData, warData, westernData,
           actionTvData, comedyTvData, realityTvData
         ] = await Promise.all([
           fetchTrending('movie'),
           fetchTrending('tv'),
+          fetchPopular('movie'),
+          fetchTopRated('movie'),
+          fetchUpcoming(),
+          fetchPopular('tv'),
+          fetchTopRated('tv'),
           fetchGenreContent(28, 'movie'),
           fetchGenreContent(35, 'movie'),
           fetchGenreContent(878, 'movie'),
@@ -72,6 +78,11 @@ const Home = () => {
 
         setTrending(trendingData.results);
         setCatalogs({
+          'Popular Movies': popularMoviesData.results,
+          'Popular TV Shows': popularTvData.results,
+          'Top Rated Movies': topRatedMoviesData.results,
+          'Top Rated TV Shows': topRatedTvData.results,
+          'Upcoming Movies': upcomingMoviesData.results,
           'Trending TV Shows': trendingTvData.results,
           'Top Rated Action': actionData.results,
           'Top Rated Comedies': comedyData.results,
