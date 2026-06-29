@@ -15,17 +15,25 @@ export const searchTorbox = async (imdbId, title) => {
 
   let allTorrents = [];
   
-  // 1. Try YTS
+  // 1. Try YTS (for movies) and EZTV (for TV shows)
   if (imdbId) {
+    // Strip "tt" prefix if present for EZTV
+    const numericImdbId = imdbId.startsWith('tt') ? imdbId.slice(2) : imdbId;
+
     try {
-      const res = await fetch(`/api/yts/list_movies.json?query_term=${imdbId}`);
-      if (res.ok) {
-        const data = await res.json();
+      const [ytsRes, eztvRes] = await Promise.allSettled([
+        fetch(`/api/yts/list_movies.json?query_term=${imdbId}`),
+        fetch(`/api/eztv/get-torrents?imdb_id=${numericImdbId}`)
+      ]);
+
+      // Handle YTS Results
+      if (ytsRes.status === 'fulfilled' && ytsRes.value.ok) {
+        const data = await ytsRes.value.json();
         if (data.data && data.data.movies && data.data.movies.length > 0) {
           const movie = data.data.movies[0];
           const ytsTorrents = movie.torrents || [];
           
-          allTorrents = ytsTorrents.map(t => {
+          const parsedYts = ytsTorrents.map(t => {
             const trackers = [
               'udp://open.demonii.com:1337/announce',
               'udp://tracker.openbittorrent.com:80',
@@ -44,10 +52,28 @@ export const searchTorbox = async (imdbId, title) => {
               magnet: magnetLink
             };
           });
+          allTorrents = [...allTorrents, ...parsedYts];
         }
       }
-    } catch (ytsErr) {
-      console.warn('YTS search failed:', ytsErr);
+
+      // Handle EZTV Results
+      if (eztvRes.status === 'fulfilled' && eztvRes.value.ok) {
+        const data = await eztvRes.value.json();
+        if (data && data.torrents && data.torrents.length > 0) {
+          const eztvTorrents = data.torrents.map(t => {
+            return {
+              name: `[EZTV] ${t.title || t.filename}`,
+              size: parseInt(t.size_bytes, 10) || 0,
+              seeders: parseInt(t.seeds, 10) || 0,
+              peers: parseInt(t.peers, 10) || 0,
+              magnet: t.magnet_url
+            };
+          });
+          allTorrents = [...allTorrents, ...eztvTorrents];
+        }
+      }
+    } catch (err) {
+      console.warn('YTS/EZTV search failed:', err);
     }
   }
 

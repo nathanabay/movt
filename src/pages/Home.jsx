@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import { fetchTrending, fetchGenreContent, fetchPopular, fetchTopRated, fetchUpcoming, fetchNowPlaying, fetchOnTheAir, fetchAiringToday, fetchAnime, fetchKDramas } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
@@ -73,8 +73,28 @@ const Home = () => {
     { name: 'Documentaries', fetcher: () => fetchGenreContent(99, 'movie'), key: ['genre', 99, 'movie'] }
   ], []);
 
+  const [loadAll, setLoadAll] = useState(false);
+  
+  // Defer rendering of the heavy 30 catalogs until user scrolls or 1s passes
+  useEffect(() => {
+    const timer = setTimeout(() => setLoadAll(true), 1500);
+    const onScroll = () => {
+      setLoadAll(true);
+      window.removeEventListener('scroll', onScroll);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
+  const activeCatalogs = useMemo(() => {
+    return loadAll ? catalogDefinitions : catalogDefinitions.slice(0, 3);
+  }, [catalogDefinitions, loadAll]);
+
   const catalogQueries = useQueries({
-    queries: catalogDefinitions.map(def => ({
+    queries: activeCatalogs.map(def => ({
       queryKey: Array.isArray(def.key) ? def.key : [def.key],
       queryFn: def.fetcher,
       staleTime: 10 * 60 * 1000, // 10 minutes specifically for catalogs
@@ -211,7 +231,7 @@ const Home = () => {
       </section>
 
       {catalogQueries.map((query, idx) => {
-        const def = catalogDefinitions[idx];
+        const def = activeCatalogs[idx];
         
         if (query.isLoading) {
           return (

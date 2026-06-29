@@ -25,6 +25,11 @@ export default defineConfig({
         target: 'https://yts.mx/api/v2',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/yts/, '')
+      },
+      '/api/eztv': {
+        target: 'https://eztvx.to/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/eztv/, '')
       }
     }
   },

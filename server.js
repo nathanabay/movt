@@ -234,6 +234,13 @@ app.use('/api/yts', createProxyMiddleware({
   ...proxyOptions
 }));
 
+app.use('/api/eztv', createProxyMiddleware({
+  target: 'https://eztvx.to/api',
+  changeOrigin: true,
+  pathRewrite: { '^/api/eztv': '' },
+  ...proxyOptions
+}));
+
 // Serve static frontend files from the "dist" directory
 app.use(express.static(path.join(__dirname, 'dist')));
 
