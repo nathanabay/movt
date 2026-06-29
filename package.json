@@ -3,7 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "dev:client": "vite",
+    "dev:server": "node server.js",
+    "build": "vite build",
+    "start": "node server.js"
+  },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
     "bcrypt": "^6.0.0",
