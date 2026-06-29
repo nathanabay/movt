@@ -535,8 +535,9 @@ const MovieDetails = ({ type }) => {
                     </div>
                   </div>
                 )}
-              </div>
+                </>
             )}
+            </div>
           </div>
           
           <div className="movie-player-container-fullscreen">
