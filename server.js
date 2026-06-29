@@ -225,6 +225,23 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
+
+// --- Global Error Handling ---
+app.use((err, req, res, next) => {
+  console.error('Unhandled Express Error:', err.stack || err.message);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! Shutting down...', err.stack || err.message);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('UNHANDLED REJECTION! Shutting down...', reason);
+  process.exit(1);
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

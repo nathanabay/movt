@@ -17,13 +17,14 @@ const pool = mysql.createPool({
 });
 
 // Initialize Schema
-const initDB = async () => {
+const initDB = async (retries = 5, delay = 5000) => {
   let connection;
-  try {
-    connection = await pool.getConnection();
-    
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS users (
+  while (retries > 0) {
+    try {
+      connection = await pool.getConnection();
+      
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
@@ -64,10 +65,18 @@ const initDB = async () => {
     `);
     
     console.log('MySQL Database initialized successfully');
-  } catch (err) {
-    console.error('Database Initialization failed:', err.message);
-  } finally {
-    if (connection) connection.release();
+      return; // Exit loop on success
+    } catch (err) {
+      console.error(`Database Initialization failed: ${err.message}. Retries left: ${retries - 1}`);
+      retries -= 1;
+      if (retries === 0) {
+        console.error('Fatal: Could not connect to database after maximum retries. Exiting process.');
+        process.exit(1);
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+    } finally {
+      if (connection) connection.release();
+    }
   }
 };
 
