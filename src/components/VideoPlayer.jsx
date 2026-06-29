@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, ExternalLink } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './VideoPlayer.css';
 
 export const VideoPlayer = React.memo(({ options, onReady }) => {
@@ -59,10 +60,28 @@ export const VideoPlayer = React.memo(({ options, onReady }) => {
     };
   }, []);
 
+  const handleCopyStream = (e) => {
+    e.stopPropagation();
+    if (options.sources && options.sources.length > 0) {
+      navigator.clipboard.writeText(options.sources[0].src)
+        .then(() => toast.success("Stream link copied! Open VLC -> File -> Open Network..."))
+        .catch(() => toast.error("Failed to copy link"));
+    }
+  };
+
   return (
     <div data-vjs-player style={{ width: '100%', height: '100%', position: 'relative' }}>
       <div ref={videoRef} style={{ width: '100%', height: '100%' }} />
       
+      <button 
+        onClick={handleCopyStream}
+        className="vlc-fallback-btn"
+        title="If audio is not playing (AC3/EAC3 codec issue), click to copy link and play in VLC"
+      >
+        <ExternalLink size={16} style={{ marginRight: '6px' }} />
+        No Audio? Play in VLC
+      </button>
+
       {/* Ripple Animation Overlay */}
       {ripple && (
         <div className="player-ripple-overlay">
