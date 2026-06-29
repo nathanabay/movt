@@ -1,0 +1,6 @@
+#!/usr/bin/expect -f
+set timeout 10
+spawn ssh -i /Users/nathanamare/Downloads/bespoet/besponate bespoet@bespo.et "ffmpeg -version"
+expect "*assword:*"
+send "aND1AND12$\r"
+expect eof

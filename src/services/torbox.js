@@ -139,6 +139,7 @@ export const searchTorbox = async (imdbId, title) => {
         if (name.includes('ac3') || name.includes('eac3')) score -= 20;
         if (name.includes('dts') || name.includes('truehd')) score -= 20;
         if (name.includes('mkv')) score -= 10;
+        if (name.includes('hevc') || name.includes('x265') || name.includes('h265')) score -= 15;
         return score;
       };
 
