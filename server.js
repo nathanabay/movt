@@ -106,6 +106,12 @@ const onProxyReq = (proxyReq, req, res, apiType) => {
   }
   if (apiType === 'torbox' && process.env.VITE_TORBOX_API_KEY) {
     proxyReq.setHeader('Authorization', `Bearer ${process.env.VITE_TORBOX_API_KEY}`);
+    
+    // TorBox's 'requestdl' endpoint explicitly requires the token in the query string
+    if (proxyReq.path.includes('/requestdl')) {
+      const separator = proxyReq.path.includes('?') ? '&' : '?';
+      proxyReq.path = proxyReq.path + separator + 'token=' + process.env.VITE_TORBOX_API_KEY;
+    }
   }
 };
 
