@@ -57,7 +57,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 160%;
-  background: #141414;
+  background: var(--bg-secondary);
   border-radius: 8px;
   box-shadow: 0 10px 20px rgba(0,0,0,0.8);
   z-index: 999;
@@ -83,7 +83,7 @@
   left: 0;
   width: 100%;
   padding: 20px 15px 10px 15px;
-  background: linear-gradient(to top, #141414, transparent);
+  background: linear-gradient(to top, var(--bg-secondary), transparent);
 }
 
 .portal-content {
@@ -145,7 +145,7 @@
 }
 
 .portal-meta .match-score {
-  color: #46d369;
+  color: var(--success-color);
   font-weight: bold;
 }
 
@@ -157,7 +157,7 @@
 
 .portal-genres {
   font-size: 0.8rem;
-  color: #a3a3a3;
+  color: var(--text-secondary);
   display: flex;
   gap: 0.4rem;
 }

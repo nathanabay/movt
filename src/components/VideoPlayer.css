@@ -96,12 +96,12 @@
 }
 
 .video-js.vjs-theme-netflix .vjs-play-progress {
-  background-color: #e50914 ; /* Netflix Red */
+  background-color: var(--accent-color) ; /* Netflix Red */
   border-radius: 4px;
 }
 
 .video-js.vjs-theme-netflix .vjs-play-progress:before {
-  color: #e50914 ; /* The drag handle */
+  color: var(--accent-color) ; /* The drag handle */
   font-size: 1.5em ;
   top: -0.3em ;
 }
@@ -233,8 +233,8 @@
 }
 
 .video-js.vjs-theme-netflix .vjs-volume-level {
-  background-color: #e50914 ;
+  background-color: var(--accent-color) ;
 }
 .video-js.vjs-theme-netflix .vjs-volume-level:before {
-  color: #e50914 ;
+  color: var(--accent-color) ;
 }

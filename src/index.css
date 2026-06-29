@@ -1,15 +1,41 @@
 :root {
+  /* Colors */
   --bg-primary: #0a0a0a;
   --bg-secondary: #141414;
+  --bg-tertiary: #181818;
+  --bg-surface: #232323;
   --bg-glass: rgba(20, 20, 20, 0.7);
+  
   --text-primary: #ffffff;
-  --text-secondary: #aaaaaa;
+  --text-secondary: #a3a3a3;
+  --text-muted: #808080;
+  
   --accent-color: #e50914; /* Cinematic red */
   --accent-hover: #f40612;
+  
+  --success-color: #46d369; /* Netflix Match Green */
+  --info-color: #3498db;
+  
   --border-color: rgba(255, 255, 255, 0.1);
+  --border-color-hover: rgba(255, 255, 255, 0.4);
+
+  /* Typography (Fluid) */
   --font-family: 'Inter', sans-serif;
+  
+  /* Layout & Spacing */
+  --container-max: 1200px;
+  --navbar-height: 70px;
+
+  /* Other */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
+  
+  --z-negative: -1;
+  --z-elevate: 10;
+  --z-sticky: 100;
+  --z-dropdown: 1000;
+  --z-modal: 2000;
+  --z-overlay: 3000;
 }
 
 * {

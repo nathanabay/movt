@@ -11,7 +11,7 @@
 }
 
 .no-torrents {
-  color: #808080;
+  color: var(--text-muted);
   font-size: 1.1rem;
 }
 
@@ -43,7 +43,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .torrent-details {
@@ -69,7 +69,7 @@
 
 .status-downloading {
   background: rgba(52, 152, 219, 0.2);
-  color: #3498db;
+  color: var(--info-color);
 }
 
 .status-unknown {
@@ -78,6 +78,6 @@
 }
 
 .torrent-progress {
-  color: #3498db;
+  color: var(--info-color);
   font-weight: 600;
 }
