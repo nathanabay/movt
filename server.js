@@ -1,6 +1,7 @@
 import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
@@ -17,6 +18,23 @@ const PORT = process.env.PORT || 3000;
 // Enable CORS
 app.use(cors());
 app.use(express.json());
+
+// --- Rate Limiting ---
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per windowMs
+  message: { error: 'Too many requests from this IP, please try again after 15 minutes' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 login/register requests per windowMs
+  message: { error: 'Too many authentication attempts, please try again later' }
+});
+
+// Apply general limiter to all /api routes
+app.use('/api/', apiLimiter);
+
 
 import jwt from 'jsonwebtoken';
 import { 
@@ -41,7 +59,7 @@ const authenticate = (req, res, next) => {
 };
 
 // --- API Routes ---
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', authLimiter, async (req, res) => {
   try {
     const user = await createUser(req.body.username, req.body.password);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
@@ -51,7 +69,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     const user = await verifyUser(req.body.username, req.body.password);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
