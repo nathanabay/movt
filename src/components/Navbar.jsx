@@ -1,11 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Play, User } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import throttle from 'lodash.throttle';
 import './Navbar.css';
 
-const Navbar = () => {
+const Navbar = React.memo(() => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [query, setQuery] = useState('');
   const [showAuth, setShowAuth] = useState(false);
@@ -15,11 +16,14 @@ const Navbar = () => {
   const { user, login, register, logout } = useAuth() || {};
 
   useEffect(() => {
-    const handleScroll = () => {
+    const handleScroll = throttle(() => {
       setIsScrolled(window.scrollY > 100);
-    };
+    }, 150);
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      handleScroll.cancel(); // Clean up throttle
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   const handleSearch = (e) => {
@@ -93,6 +97,6 @@ const Navbar = () => {
       )}
     </nav>
   );
-};
+});
 
 export default Navbar;

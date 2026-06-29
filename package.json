@@ -13,6 +13,7 @@
     "http-proxy-middleware": "^3.0.7",
     "jsonwebtoken": "^9.0.3",
     "lodash.debounce": "^4.0.8",
+    "lodash.throttle": "^4.1.1",
     "lucide-react": "^1.21.0",
     "mysql2": "^3.22.5",
     "react": "^19.2.7",
