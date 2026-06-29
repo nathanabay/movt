@@ -75,6 +75,8 @@
   font-weight: 500;
   color: var(--text-secondary);
   transition: var(--transition-fast);
+  padding: 8px 12px;
+  margin: -8px -12px;
 }
 
 .nav-link:hover {
@@ -181,6 +183,8 @@
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 0.9rem;
+  padding: 10px;
+  margin: -10px;
 }
 
 .auth-toggle:hover {

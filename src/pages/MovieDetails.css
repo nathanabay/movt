@@ -30,8 +30,8 @@
   background: var(--bg-tertiary);
   color: white;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,8 +80,8 @@
 }
 
 .btn-icon {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.7);
   background: rgba(42, 42, 42, 0.6);
