@@ -4,6 +4,10 @@ import VideoPlayer from '../components/VideoPlayer';
 import { Play, Download, X, Plus, ArrowLeft, Check, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './MovieDetails.css';
+import './TorboxStreams.css';
+import './EpisodesList.css';
+import './SimilarGrid.css';
+import './FullScreenPlayer.css';
 import '../components/Skeleton.css';
 
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';

@@ -1,0 +1,106 @@
+/* Similar Section Styling */
+.similar-section {
+  padding: 2rem 4rem 4rem;
+}
+
+.similar-header {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 2rem;
+}
+
+.similar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.similar-card {
+  background: #2f2f2f;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.similar-card:hover {
+  background: #404040;
+}
+
+.similar-card:hover .similar-play-icon {
+  opacity: 1;
+}
+
+.similar-poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.similar-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.similar-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid white;
+  border-radius: 50%;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.similar-info {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.similar-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.similar-badge {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 0 0.4rem;
+  border-radius: 3px;
+  color: var(--text-secondary);
+}
+
+.similar-add-btn {
+  margin-left: auto;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.similar-add-btn:hover {
+  color: white;
+}
+
+.similar-overview {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .similar-section {
+    padding: 1rem 2rem 3rem;
+  }
+}

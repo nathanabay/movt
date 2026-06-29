@@ -1,0 +1,160 @@
+/* Episodes Section Styling */
+.episodes-section {
+  padding: 2rem 4rem;
+  border-bottom: 1px solid #282828;
+}
+
+.episodes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.episodes-header h3 {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.season-select {
+  background: #242424;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.season-select:focus {
+  border-color: white;
+}
+
+.episodes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.episode-item {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid #282828;
+  border-radius: 4px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.episode-item:hover {
+  background: var(--bg-surface);
+}
+
+.episode-number {
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  width: 30px;
+  text-align: center;
+  font-weight: 300;
+}
+
+.episode-thumbnail {
+  position: relative;
+  width: 150px;
+  height: 84px; /* 16:9 aspect */
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.episode-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.episode-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  background: var(--bg-secondary);
+}
+
+.episode-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.episode-item:hover .episode-play-icon {
+  opacity: 1;
+}
+
+.episode-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.episode-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.episode-title-row h4 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.episode-runtime {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.episode-overview {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .episodes-section {
+    padding: 1rem 2rem;
+  }
+  
+  .episode-item {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .episode-thumbnail {
+    width: 120px;
+    height: 67px;
+  }
+  
+  .episode-overview {
+    -webkit-line-clamp: 3;
+  }
+}
+
+@media (max-width: 768px) {
+  .episodes-section { padding: 1.5rem 1rem !important; }
+}
