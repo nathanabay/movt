@@ -4,7 +4,7 @@
 }
 
 .search-title {
-  font-size: 2rem;
+  font-size: var(--text-2xl);
   font-weight: 600;
   margin-bottom: 2rem;
   color: var(--text-primary);
@@ -21,7 +21,7 @@
 }
 
 .no-results {
-  font-size: 1.2rem;
+  font-size: var(--text-lg);
   color: var(--text-secondary);
   text-align: center;
   margin-top: 5rem;

@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.5rem;
+  font-size: var(--text-xl);
   font-weight: 700;
   color: var(--accent-color);
 }
@@ -210,9 +210,6 @@
     flex-wrap: wrap;
     padding: 0.5rem 1rem;
     gap: 10px;
-  }
-  .navbar-logo {
-    font-size: 1.2rem;
   }
   .navbar-search {
     order: 3;

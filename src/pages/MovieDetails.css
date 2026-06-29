@@ -67,7 +67,7 @@
 }
 
 .modal-title {
-  font-size: 3rem;
+  font-size: var(--text-3xl);
   font-weight: 800;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.45);
   margin-bottom: 1.5rem;
@@ -580,9 +580,6 @@
   }
   .modal-hero {
     height: 300px;
-  }
-  .modal-title {
-    font-size: 2rem;
   }
   .modal-info-section {
     padding: 0 1rem;

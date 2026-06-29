@@ -41,7 +41,7 @@
 }
 
 .hero-title {
-  font-size: 4rem;
+  font-size: var(--text-4xl);
   font-weight: 800;
   margin-bottom: 1rem;
   line-height: 1.1;
@@ -49,7 +49,7 @@
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
+  font-size: var(--text-lg);
   font-weight: 500;
   color: var(--text-primary);
   text-shadow: 2px 2px 4px rgba(0,0,0,0.45);
@@ -106,7 +106,7 @@
 }
 
 .row-title {
-  font-size: 1.4vw;
+  font-size: var(--text-xl);
   color: #e5e5e5;
   font-weight: 500;
   margin-bottom: 0.5em;
@@ -187,21 +187,12 @@
     margin-left: 1rem;
     margin-top: 150px;
   }
-  .hero-title {
-    font-size: 2rem;
-  }
-  .hero-subtitle {
-    font-size: 1rem;
-  }
   .movies-row-section {
     padding-left: 1rem;
     margin-top: -60px;
   }
   .movies-row-section ~ .movies-row-section {
     margin-top: 2rem;
-  }
-  .row-title {
-    font-size: 1.2rem;
   }
   .slick-prev-custom, .slick-next-custom {
     display: none !important; /* Hide custom arrows on mobile to rely on touch swipe */
