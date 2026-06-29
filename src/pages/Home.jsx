@@ -210,18 +210,31 @@ const Home = () => {
         </div>
       </section>
 
-      {Object.keys(catalogs).map((catalogName) => {
-        const catalogMovies = catalogs[catalogName];
+      {catalogQueries.map((query, idx) => {
+        const def = catalogDefinitions[idx];
+        
+        if (query.isLoading) {
+          return (
+            <section key={def.name + '_skeleton'} className="movies-row-section">
+              <h2 className="row-title">{def.name}</h2>
+              <div className="skeleton-row" style={{ marginTop: '10px' }}>
+                {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton skeleton-card"></div>)}
+              </div>
+            </section>
+          );
+        }
+
+        const catalogMovies = query.data?.results;
         if (!catalogMovies || catalogMovies.length === 0) return null;
         
         return (
-          <section key={catalogName} className="movies-row-section">
-            <h2 className="row-title">{catalogName}</h2>
+          <section key={def.name} className="movies-row-section">
+            <h2 className="row-title">{def.name}</h2>
             <div className="slick-row" onWheel={(e) => {
-              if (!catalogSliderRefs.current[catalogName]) return;
-              handleWheel(e, { current: catalogSliderRefs.current[catalogName] });
+              if (!catalogSliderRefs.current[def.name]) return;
+              handleWheel(e, { current: catalogSliderRefs.current[def.name] });
             }}>
-              <SlickSlider ref={el => catalogSliderRefs.current[catalogName] = el} {...sliderSettings} infinite={catalogMovies.length > 6}>
+              <SlickSlider ref={el => catalogSliderRefs.current[def.name] = el} {...sliderSettings} infinite={catalogMovies.length > 6}>
                 {catalogMovies.map(movie => (
                   <div key={movie.id} className="row-item-wrapper">
                     <MovieCard movie={movie} />

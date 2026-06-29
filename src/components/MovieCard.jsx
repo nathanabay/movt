@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Star, Play, Plus, ThumbsUp, ChevronDown, Check } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { fetchMovieVideos } from '../services/tmdb';
@@ -8,6 +8,7 @@ import './MovieCard.css';
 const MovieCard = ({ movie }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
+  const navigate = useNavigate();
   const hoverTimeoutRef = useRef(null);
   
   const { watchlist, toggleWatchlist, isInWatchlist } = useWatchlist();
@@ -52,7 +53,13 @@ const MovieCard = ({ movie }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Link to={linkPath} className="movie-card fade-in" tabIndex={-1}>
+      <div 
+        className="movie-card fade-in" 
+        tabIndex={0} 
+        role="button" 
+        onClick={() => navigate(linkPath)}
+        onKeyDown={(e) => { if (e.key === "Enter") navigate(linkPath); }}
+      >
         <div className="movie-poster-container">
           <img 
           src={imageUrl} 
@@ -65,11 +72,14 @@ const MovieCard = ({ movie }) => {
             <span className="movie-title-text">{movie.title || movie.name}</span>
           </div>
         </div>
-      </Link>
+      </div>
       
       {isHovered && (
         <div className="movie-card-portal fade-in">
-          <Link to={linkPath} style={{textDecoration: 'none'}}>
+          <div 
+            style={{textDecoration: 'none', cursor: 'pointer'}} 
+            onClick={() => navigate(linkPath)}
+          >
             <div className="portal-backdrop-container">
               {isHovered && trailerKey ? (
                 <div className="movie-card-trailer" style={{ width: '100%', height: '100%' }}>
@@ -117,7 +127,7 @@ const MovieCard = ({ movie }) => {
                 <span>Exciting</span> • <span>Action</span> • <span>Sci-Fi</span>
               </div>
             </div>
-          </Link>
+          </div>
         </div>
       )}
     </div>

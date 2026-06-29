@@ -33,7 +33,7 @@ export const fetchTrending = async (type = 'movie') => {
   return copy;
 };
 
-export const searchMulti = async (query) => {
+export const searchMulti = async (query, page = 1) => {
   const data = await fetchTmdb(`${BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
   const copy = data;
   copy.results = copy.results.filter(item => item.media_type === 'movie' || item.media_type === 'tv');
