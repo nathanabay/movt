@@ -111,14 +111,18 @@ app.use('/api/torbox', createProxyMiddleware({
   target: 'https://api.torbox.app/v1/api/torrents',
   changeOrigin: true,
   pathRewrite: { '^/api/torbox': '' },
-  onProxyReq: (proxyReq, req, res) => onProxyReq(proxyReq, req, res, 'torbox')
+  on: {
+    proxyReq: (proxyReq, req, res) => onProxyReq(proxyReq, req, res, 'torbox')
+  }
 }));
 
 app.use('/api/tmdb', createProxyMiddleware({
   target: 'https://api.themoviedb.org/3',
   changeOrigin: true,
   pathRewrite: { '^/api/tmdb': '' },
-  onProxyReq: (proxyReq, req, res) => onProxyReq(proxyReq, req, res, 'tmdb')
+  on: {
+    proxyReq: (proxyReq, req, res) => onProxyReq(proxyReq, req, res, 'tmdb')
+  }
 }));
 
 app.use('/api/yts', createProxyMiddleware({
