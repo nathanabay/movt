@@ -12,8 +12,8 @@
 
 .search-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
 }
 
 .search-grid-item {
@@ -27,12 +27,4 @@
   margin-top: 5rem;
 }
 
-@media (max-width: 768px) {
-  .search-page {
-    padding: 100px 2rem 2rem 2rem;
-  }
-  .search-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 1rem;
-  }
-}
+

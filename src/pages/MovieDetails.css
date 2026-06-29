@@ -127,11 +127,17 @@
 }
 
 .modal-overview-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 2rem;
   line-height: 1.6;
-  font-size: 1.1rem;
+}
+
+.modal-overview-grid > :first-child {
+  flex: 2 1 300px;
+}
+.modal-overview-grid > :last-child {
+  flex: 1 1 250px;
 }
 
 .modal-overview-metadata {
@@ -401,8 +407,8 @@
 
 .similar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
 }
 
 .similar-card {
@@ -575,9 +581,6 @@
 }
 
 @media (max-width: 768px) {
-  .modal-overview-grid {
-    grid-template-columns: 1fr;
-  }
   .modal-hero {
     height: 300px;
   }
