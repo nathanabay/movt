@@ -43,7 +43,9 @@ const Home = () => {
       try {
         const [
           trendingData, trendingTvData, actionData, comedyData, sciFiData, horrorData, romanceData, animationData,
-          dramaData, thrillerData, crimeData, mysteryData, documentaryData
+          dramaData, thrillerData, crimeData, mysteryData, documentaryData,
+          familyData, historyData, musicData, warData, westernData,
+          actionTvData, comedyTvData, realityTvData
         ] = await Promise.all([
           fetchTrending('movie'),
           fetchTrending('tv'),
@@ -57,7 +59,15 @@ const Home = () => {
           fetchGenreContent(53, 'movie'),
           fetchGenreContent(80, 'movie'),
           fetchGenreContent(9648, 'movie'),
-          fetchGenreContent(99, 'movie')
+          fetchGenreContent(99, 'movie'),
+          fetchGenreContent(10751, 'movie'),
+          fetchGenreContent(36, 'movie'),
+          fetchGenreContent(10402, 'movie'),
+          fetchGenreContent(10752, 'movie'),
+          fetchGenreContent(37, 'movie'),
+          fetchGenreContent(10759, 'tv'),
+          fetchGenreContent(35, 'tv'),
+          fetchGenreContent(10764, 'tv')
         ]);
 
         setTrending(trendingData.results);
@@ -72,7 +82,15 @@ const Home = () => {
           'Horror Movies': horrorData.results,
           'Mystery': mysteryData.results,
           'Romance': romanceData.results,
+          'Family Movies': familyData.results,
           'Animation': animationData.results,
+          'History': historyData.results,
+          'Music': musicData.results,
+          'War': warData.results,
+          'Western': westernData.results,
+          'Action & Adventure TV': actionTvData.results,
+          'Comedy TV Shows': comedyTvData.results,
+          'Reality TV': realityTvData.results,
           'Documentaries': documentaryData.results
         });
       } catch (err) {
