@@ -179,6 +179,23 @@ const proxyOptions = {
   }
 };
 
+// --- API Key Fast-Fail Middleware ---
+app.use('/api/torbox', (req, res, next) => {
+  if (!process.env.VITE_TORBOX_API_KEY) {
+    console.error('Fast-Fail: Missing VITE_TORBOX_API_KEY for request to', req.url);
+    return res.status(503).json({ success: false, detail: 'Service Unavailable: TorBox API key is missing on the server.' });
+  }
+  next();
+});
+
+app.use('/api/tmdb', (req, res, next) => {
+  if (!process.env.VITE_TMDB_API_KEY) {
+    console.error('Fast-Fail: Missing VITE_TMDB_API_KEY for request to', req.url);
+    return res.status(503).json({ error: 'Service Unavailable: TMDB API key is missing on the server.' });
+  }
+  next();
+});
+
 app.use('/api/apibay', createProxyMiddleware({
   target: 'https://apibay.org',
   changeOrigin: true,
