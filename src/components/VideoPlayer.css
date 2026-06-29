@@ -45,114 +45,114 @@
    NETFLIX VIDEO.JS THEME OVERRIDES 
    ------------------------------------- */
 
-.video-js.vjs-fill {
+.video-js.vjs-theme-netflix.vjs-fill {
   background-color: black;
 }
 
 /* Control Bar Base */
-.video-js .vjs-control-bar {
-  position: absolute !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  z-index: 10 !important;
-  background: transparent !important;
-  background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%) !important;
-  height: 130px !important;
-  display: flex !important;
+.video-js.vjs-theme-netflix .vjs-control-bar {
+  position: absolute ;
+  bottom: 0 ;
+  width: 100% ;
+  z-index: 10 ;
+  background: transparent ;
+  background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%) ;
+  height: 130px ;
+  display: flex ;
   align-items: flex-end;
-  padding: 0 2% 20px 2% !important;
+  padding: 0 2% 20px 2% ;
   opacity: 0;
   transition: opacity 0.5s ease;
 }
 
-.video-js.vjs-has-started.vjs-user-active .vjs-control-bar,
-.video-js.vjs-paused .vjs-control-bar {
+.video-js.vjs-theme-netflix.vjs-has-started.vjs-user-active .vjs-control-bar,
+.video-js.vjs-theme-netflix.vjs-paused .vjs-control-bar {
   opacity: 1;
 }
 
 /* Progress Control Timeline - positioned above buttons */
-.video-js .vjs-progress-control {
-  position: absolute !important;
-  bottom: 80px !important; /* Buttons end at 65px (20px padding + 45px height), 80px leaves 15px gap */
-  top: auto !important;
-  left: 2% !important;
-  right: 80px !important; /* Leave space for remaining time */
-  width: auto !important;
-  height: 20px !important;
-  display: flex !important;
-  align-items: center !important;
+.video-js.vjs-theme-netflix .vjs-progress-control {
+  position: absolute ;
+  bottom: 80px ; /* Buttons end at 65px (20px padding + 45px height), 80px leaves 15px gap */
+  top: auto ;
+  left: 2% ;
+  right: 80px ; /* Leave space for remaining time */
+  width: auto ;
+  height: 20px ;
+  display: flex ;
+  align-items: center ;
 }
 
-.video-js .vjs-progress-holder {
-  height: 4px !important;
+.video-js.vjs-theme-netflix .vjs-progress-holder {
+  height: 4px ;
   border-radius: 4px;
   transition: height 0.2s ease;
-  width: 100% !important;
-  margin: 0 !important;
+  width: 100% ;
+  margin: 0 ;
 }
 
-.video-js .vjs-progress-control:hover .vjs-progress-holder {
-  height: 8px !important;
+.video-js.vjs-theme-netflix .vjs-progress-control:hover .vjs-progress-holder {
+  height: 8px ;
 }
 
-.video-js .vjs-play-progress {
-  background-color: #e50914 !important; /* Netflix Red */
+.video-js.vjs-theme-netflix .vjs-play-progress {
+  background-color: #e50914 ; /* Netflix Red */
   border-radius: 4px;
 }
 
-.video-js .vjs-play-progress:before {
-  color: #e50914 !important; /* The drag handle */
-  font-size: 1.5em !important;
-  top: -0.3em !important;
+.video-js.vjs-theme-netflix .vjs-play-progress:before {
+  color: #e50914 ; /* The drag handle */
+  font-size: 1.5em ;
+  top: -0.3em ;
 }
 
-.video-js .vjs-load-progress {
-  background: rgba(255, 255, 255, 0.2) !important;
+.video-js.vjs-theme-netflix .vjs-load-progress {
+  background: rgba(255, 255, 255, 0.2) ;
   border-radius: 4px;
 }
-.video-js .vjs-load-progress div {
-  background: rgba(255, 255, 255, 0.4) !important;
+.video-js.vjs-theme-netflix .vjs-load-progress div {
+  background: rgba(255, 255, 255, 0.4) ;
 }
 
 /* Buttons and Controls */
-.video-js .vjs-button {
-  width: 45px !important;
-  height: 45px !important;
-  display: flex !important;
+.video-js.vjs-theme-netflix .vjs-button {
+  width: 45px ;
+  height: 45px ;
+  display: flex ;
   align-items: center;
   justify-content: center;
-  margin-right: 20px !important; /* Netflix has spacious buttons */
-  outline: none !important; /* Remove white box outline on click */
+  margin-right: 20px ; /* Netflix has spacious buttons */
+  outline: none ; /* Remove white box outline on click */
 }
 
-.video-js .vjs-button > .vjs-icon-placeholder::before {
-  font-size: 2.2rem !important;
-  line-height: 1 !important;
+.video-js.vjs-theme-netflix .vjs-button > .vjs-icon-placeholder::before {
+  font-size: 2.2rem ;
+  line-height: 1 ;
 }
 
 /* Specific icons */
-.video-js .vjs-play-control, 
-.video-js .vjs-volume-panel, 
-.video-js .vjs-fullscreen-control, 
-.video-js .vjs-skip-backward-control,
-.video-js .vjs-skip-forward-control,
-.video-js .vjs-picture-in-picture-control {
+.video-js.vjs-theme-netflix .vjs-play-control, 
+.video-js.vjs-theme-netflix .vjs-volume-panel, 
+.video-js.vjs-theme-netflix .vjs-fullscreen-control, 
+.video-js.vjs-theme-netflix .vjs-skip-backward-control,
+.video-js.vjs-theme-netflix .vjs-skip-forward-control,
+.video-js.vjs-theme-netflix .vjs-picture-in-picture-control {
   cursor: pointer;
   transition: transform 0.2s;
 }
 
-.video-js .vjs-play-control:hover, 
-.video-js .vjs-volume-panel:hover, 
-.video-js .vjs-fullscreen-control:hover,
-.video-js .vjs-skip-backward-control:hover,
-.video-js .vjs-skip-forward-control:hover {
+.video-js.vjs-theme-netflix .vjs-play-control:hover, 
+.video-js.vjs-theme-netflix .vjs-volume-panel:hover, 
+.video-js.vjs-theme-netflix .vjs-fullscreen-control:hover,
+.video-js.vjs-theme-netflix .vjs-skip-backward-control:hover,
+.video-js.vjs-theme-netflix .vjs-skip-forward-control:hover {
   transform: scale(1.15);
 }
 
 /* Skip Forward / Backward Netflix SVG Icons */
-.video-js .vjs-skip-backward-control .vjs-icon-placeholder::before,
-.video-js .vjs-skip-forward-control .vjs-icon-placeholder::before {
-  content: '' !important;
+.video-js.vjs-theme-netflix .vjs-skip-backward-control .vjs-icon-placeholder::before,
+.video-js.vjs-theme-netflix .vjs-skip-forward-control .vjs-icon-placeholder::before {
+  content: '' ;
   display: block;
   width: 28px;
   height: 28px;
@@ -164,77 +164,77 @@
 }
 
 /* Data URI for skip backward */
-.video-js .vjs-skip-backward-control .vjs-icon-placeholder::before {
+.video-js.vjs-theme-netflix .vjs-skip-backward-control .vjs-icon-placeholder::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11V9a4 4 0 0 1 4-4h14'/%3E%3Cpolyline points='7 1 3 5 7 9'/%3E%3Ctext x='12' y='18' font-size='10' font-family='sans-serif' stroke='none' fill='black'%3E10%3C/text%3E%3C/svg%3E");
 }
 
 /* Data URI for skip forward */
-.video-js .vjs-skip-forward-control .vjs-icon-placeholder::before {
+.video-js.vjs-theme-netflix .vjs-skip-forward-control .vjs-icon-placeholder::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 11V9a4 4 0 0 0-4-4H3'/%3E%3Cpolyline points='17 1 21 5 17 9'/%3E%3Ctext x='12' y='18' font-size='10' font-family='sans-serif' stroke='none' fill='black'%3E10%3C/text%3E%3C/svg%3E");
 }
 
 /* Force display of Skip Buttons */
-.video-js .vjs-skip-backward-control,
-.video-js .vjs-skip-forward-control {
-  display: flex !important;
+.video-js.vjs-theme-netflix .vjs-skip-backward-control,
+.video-js.vjs-theme-netflix .vjs-skip-forward-control {
+  display: flex ;
 }
 
 /* Fix Flex Layout for bottom controls */
-.video-js .vjs-custom-control-spacer {
-  display: flex !important;
-  flex: 1 1 auto !important; /* Pushes the fullscreen button to the right */
+.video-js.vjs-theme-netflix .vjs-custom-control-spacer {
+  display: flex ;
+  flex: 1 1 auto ; /* Pushes the fullscreen button to the right */
 }
 
 /* Clean up the Time Display */
-.video-js .vjs-remaining-time {
-  position: absolute !important;
-  bottom: 80px !important; /* Align with progress bar */
-  top: auto !important;
-  right: 2% !important;
-  display: flex !important;
+.video-js.vjs-theme-netflix .vjs-remaining-time {
+  position: absolute ;
+  bottom: 80px ; /* Align with progress bar */
+  top: auto ;
+  right: 2% ;
+  display: flex ;
   align-items: center;
   justify-content: flex-end;
-  width: 70px !important;
-  height: 20px !important;
-  font-size: 1.2rem !important;
+  width: 70px ;
+  height: 20px ;
+  font-size: 1.2rem ;
   font-weight: 500;
   padding: 0;
 }
 
-.video-js .vjs-time-divider,
-.video-js .vjs-duration,
-.video-js .vjs-current-time,
-.video-js .vjs-seek-to-live-control {
-  display: none !important; /* Hide redundant Netflix times */
+.video-js.vjs-theme-netflix .vjs-time-divider,
+.video-js.vjs-theme-netflix .vjs-duration,
+.video-js.vjs-theme-netflix .vjs-current-time,
+.video-js.vjs-theme-netflix .vjs-seek-to-live-control {
+  display: none ; /* Hide redundant Netflix times */
 }
 
 /* Ensure Video.js hidden elements actually stay hidden */
-.video-js .vjs-hidden {
-  display: none !important;
+.video-js.vjs-theme-netflix .vjs-hidden {
+  display: none ;
 }
 
 /* Hide Default Big Play Button since we implemented Ripple */
-.video-js .vjs-big-play-button {
-  display: none !important;
+.video-js.vjs-theme-netflix .vjs-big-play-button {
+  display: none ;
 }
 
 /* Volume Bar */
-.video-js .vjs-volume-panel {
-  display: flex !important;
+.video-js.vjs-theme-netflix .vjs-volume-panel {
+  display: flex ;
   align-items: center;
-  width: auto !important;
-  height: 45px !important; /* Force to match button height so it doesn't float up */
-  margin-bottom: 0 !important;
-  margin-right: 30px !important;
+  width: auto ;
+  height: 45px ; /* Force to match button height so it doesn't float up */
+  margin-bottom: 0 ;
+  margin-right: 30px ;
 }
 
-.video-js .vjs-mute-control {
-  margin-right: 0 !important; /* Keep icon attached to volume slider */
+.video-js.vjs-theme-netflix .vjs-mute-control {
+  margin-right: 0 ; /* Keep icon attached to volume slider */
 }
 
-.video-js .vjs-volume-level {
-  background-color: #e50914 !important;
+.video-js.vjs-theme-netflix .vjs-volume-level {
+  background-color: #e50914 ;
 }
-.video-js .vjs-volume-level:before {
-  color: #e50914 !important;
+.video-js.vjs-theme-netflix .vjs-volume-level:before {
+  color: #e50914 ;
 }

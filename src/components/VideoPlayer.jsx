@@ -15,6 +15,7 @@ export const VideoPlayer = ({ options, onReady }) => {
       const videoElement = document.createElement("video");
       videoElement.classList.add('video-js');
       videoElement.classList.add('vjs-big-play-centered');
+      videoElement.classList.add('vjs-theme-netflix');
 
       videoRef.current.appendChild(videoElement);
 

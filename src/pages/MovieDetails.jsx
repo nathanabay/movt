@@ -186,6 +186,18 @@ const MovieDetails = ({ type }) => {
     });
   };
 
+  if (streamLoading) {
+    return (
+      <div className="full-screen-player player-loading-overlay fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', zIndex: 3000 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner-large" style={{ margin: '0 auto 20px auto' }}></div>
+          <h2 style={{ color: 'white', fontSize: '1.8rem', fontWeight: 500, margin: 0 }}>Connecting to TorBox...</h2>
+          <p style={{ color: '#a3a3a3', marginTop: '10px' }}>Initializing Secure Stream</p>
+        </div>
+      </div>
+    );
+  }
+
   if (streamUrl) {
     return (
       <div 
