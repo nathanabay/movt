@@ -15,14 +15,18 @@ export const useTorboxStream = (movie, type) => {
   const [autoplayCountdown, setAutoplayCountdown] = useState(null);
   const [precachedNext, setPrecachedNext] = useState(false);
   const countdownTimerRef = useRef(null);
+  const requestAbortController = useRef(null);
 
   // Live Stats Polling
   useEffect(() => {
     let interval;
+    let pollAbortController = null;
     if (activeStreamInfo && activeStreamInfo.torrentId) {
       interval = setInterval(async () => {
+        if (pollAbortController) pollAbortController.abort();
+        pollAbortController = new AbortController();
         try {
-          const res = await fetch(`/api/torbox/mylist`);
+          const res = await fetch(`/api/torbox/mylist`, { signal: pollAbortController.signal });
           const d = await res.json();
           const t = (d.data || []).find(x => x.id === activeStreamInfo.torrentId);
           if (t && t.download_state === 'downloading') {
@@ -37,17 +41,24 @@ export const useTorboxStream = (movie, type) => {
         } catch (e) {}
       }, 3000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (pollAbortController) pollAbortController.abort();
+    };
   }, [activeStreamInfo]);
 
   useEffect(() => {
     return () => {
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+      if (requestAbortController.current) requestAbortController.current.abort();
     };
   }, []);
 
   const handleWatchMovie = async (torrents) => {
     try {
+      if (requestAbortController.current) requestAbortController.current.abort();
+      requestAbortController.current = new AbortController();
+      const signal = requestAbortController.current.signal;
       setStreamLoading(true);
       let targetMagnet = null;
       if (torrents && torrents.length > 0) {
@@ -69,7 +80,7 @@ export const useTorboxStream = (movie, type) => {
       }
 
       const { getStreamUrl } = await import('../services/torbox');
-      const data = await getStreamUrl(targetMagnet);
+      const data = await getStreamUrl(targetMagnet, signal);
       
       setActiveStreamInfo(data);
       const subUrl = await fetchSubtitles(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), 'movie');
@@ -77,7 +88,7 @@ export const useTorboxStream = (movie, type) => {
       
       setStreamUrl(data.url);
     } catch (err) {
-      toast.error('Failed to stream movie: ' + err.message);
+      if (err.name !== 'AbortError' && err.message !== 'Aborted') toast.error('Failed to stream movie: ' + err.message);
     } finally {
       setStreamLoading(false);
     }
@@ -91,7 +102,7 @@ export const useTorboxStream = (movie, type) => {
       setStreamLoading(true);
       const showName = movie.title || movie.name;
       const { getEpisodeStreamUrl } = await import('../services/torbox');
-      const data = await getEpisodeStreamUrl(showName, seasonNum, episodeNum);
+      const data = await getEpisodeStreamUrl(showName, seasonNum, episodeNum, signal);
       setPlayingTvContext({ season: seasonNum, episode: episodeNum });
       setPrecachedNext(false);
       setActiveStreamInfo(data);
@@ -101,7 +112,7 @@ export const useTorboxStream = (movie, type) => {
       
       setStreamUrl(data.url);
     } catch (err) {
-      toast.error('Failed to stream episode: ' + err.message);
+      if (err.name !== 'AbortError' && err.message !== 'Aborted') toast.error('Failed to stream episode: ' + err.message);
       setAutoplayCountdown(null);
     } finally {
       setStreamLoading(false);

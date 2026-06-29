@@ -155,13 +155,14 @@ export const addTorrent = async (magnetLink) => {
   }
 };
 
-export const getStreamUrl = async (magnetLink) => {
+export const getStreamUrl = async (magnetLink, signal = null) => {
   try {
     // 1. Add Torrent via raw fetch (bypassing SDK FormData bug)
     const formData = new FormData();
     formData.append('magnet', magnetLink);
     
     const addRes = await fetch('/api/torbox/createtorrent', {
+      signal,
       method: 'POST',
       body: formData
     });
@@ -178,10 +179,12 @@ export const getStreamUrl = async (magnetLink) => {
     const maxRetries = 30; // 60 seconds
     
     while (retries < maxRetries) {
-      const listRes = await fetch(`/api/torbox/mylist?id=${torrentId}`);
+      if (signal && signal.aborted) throw new Error('Aborted');
+      const listRes = await fetch(`/api/torbox/mylist?id=${torrentId}`, { signal });
       if (!listRes.ok) {
         retries++;
         await new Promise(resolve => setTimeout(resolve, 4000));
+        if (signal && signal.aborted) throw new Error('Aborted');
         continue;
       }
       
@@ -200,6 +203,7 @@ export const getStreamUrl = async (magnetLink) => {
       retries++;
       if (retries < maxRetries) {
         await new Promise(resolve => setTimeout(resolve, 4000));
+        if (signal && signal.aborted) throw new Error('Aborted');
       }
     }
     
@@ -217,7 +221,8 @@ export const getStreamUrl = async (magnetLink) => {
     const videoFile = validVideoFiles.sort((a,b) => b.size - a.size)[0];
 
     // 3. Request Stream Link
-    const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${torrentId}&file_id=${videoFile.id}&zip=false&torrent_file=false`);
+    if (signal && signal.aborted) throw new Error('Aborted');
+    const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${torrentId}&file_id=${videoFile.id}&zip=false&torrent_file=false`, { signal });
     const streamData = await streamRes.json();
     
     if (!streamData.success) {
@@ -236,13 +241,13 @@ export const getStreamUrl = async (magnetLink) => {
   }
 };
 
-export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
+export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum, signal = null) => {
   try {
     const sStr = seasonNum < 10 ? `S0${seasonNum}` : `S${seasonNum}`;
     const eStr = episodeNum < 10 ? `E0${episodeNum}` : `E${episodeNum}`;
     
     // 1. Fetch user's torrent list to see if they already have the season pack or episode
-    const listRes = await fetch(`/api/torbox/mylist`);
+    const listRes = await fetch(`/api/torbox/mylist`, { signal });
     const listData = await listRes.json();
     const torrents = listData.data || [];
 
@@ -273,7 +278,7 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
 
     // 2. If found in cache, stream it instantly!
     if (matchedTorrentId && matchedFileId) {
-      const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${matchedTorrentId}&file_id=${matchedFileId}&zip=false&torrent_file=false`);
+      const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${matchedTorrentId}&file_id=${matchedFileId}&zip=false&torrent_file=false`, { signal });
       const streamData = await streamRes.json();
       if (streamData.success) {
         return {
@@ -291,7 +296,7 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
       throw new Error(`No streams available for ${sStr}${eStr}`);
     }
     
-    return getStreamUrl(searchData[0].magnet);
+    return getStreamUrl(searchData[0].magnet, signal);
   } catch (err) {
     console.error("Episode stream generation error:", err);
     throw err;
