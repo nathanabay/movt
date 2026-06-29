@@ -10,6 +10,13 @@ import './SimilarGrid.css';
 import './FullScreenPlayer.css';
 import '../components/Skeleton.css';
 
+import HeroBanner from '../components/movie-details/HeroBanner';
+import EpisodesList from '../components/movie-details/EpisodesList';
+import StreamList from '../components/movie-details/StreamList';
+import CastSpotlight from '../components/movie-details/CastSpotlight';
+import SmartCollections from '../components/movie-details/SmartCollections';
+import SimilarGrid from '../components/movie-details/SimilarGrid';
+
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
 import { useMovieData } from '../hooks/useMovieData';
 import { useTvSeasons } from '../hooks/useTvSeasons';
@@ -404,335 +411,49 @@ const MovieDetails = ({ type }) => {
         <button className="modal-close-btn" onClick={() => navigate(-1)} style={{ backgroundColor: themeColor }}>
           <X size={24} />
         </button>
-        
-        <div className="modal-hero" style={{ backgroundImage: `url(${backdropUrl})` }}>
-          <div className="modal-hero-gradient" style={{ background: `linear-gradient(to top, ${themeColor} 0%, transparent 100%)` }}></div>
-          <div className="modal-hero-content">
-            <h1 className="modal-title">{movie.title || movie.name}</h1>
-            <div className="modal-buttons">
-              <button 
-                className="btn-hero btn-play" 
-                onClick={handleWatchMovie} 
-                disabled={streamLoading}
-              >
-                <Play fill="black" size={24} /> 
-                {streamLoading ? 'Connecting...' : (
-                  getProgress(movie.id)?.currentTime > 60 
-                  ? `Resume from ${Math.floor(getProgress(movie.id).currentTime / 60)}:${('0' + Math.floor(getProgress(movie.id).currentTime % 60)).slice(-2)}` 
-                  : 'Play'
-                )}
-              </button>
-              <button 
-                className="btn-icon" 
-                onClick={() => toggleWatchlist({ ...movie, media_type: type })}
-                title={inList ? "Remove from My List" : "Add to My List"}
-              >
-                {inList ? <Check size={24} /> : <Plus size={24} />}
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="modal-info-section">
-          <div className="modal-meta-row">
-            <span className="match-score">{(movie.vote_average * 10).toFixed(0)}% Match</span>
-            <span className="release-year">{(movie.release_date || movie.first_air_date)?.substring(0, 4)}</span>
-            <span className="runtime-badge">
-              {type === 'tv' 
-                ? `${movie.number_of_seasons} Season${movie.number_of_seasons > 1 ? 's' : ''}` 
-                : `${movie.runtime}m`
-              }
-            </span>
-            <span className="hd-badge">HD</span>
-          </div>
-          
-          <div className="modal-overview-grid">
-            <div className="modal-overview-text">
-              <p>{movie.overview}</p>
-            </div>
-            <div className="modal-overview-metadata">
-              <p><strong>Genres:</strong> {movie.genres?.map(g => g.name).join(', ')}</p>
-            </div>
-          </div>
-        </div>
+        <HeroBanner 
+          movie={movie} 
+          themeColor={themeColor} 
+          type={type} 
+          handleWatchMovie={handleWatchMovie} 
+          streamLoading={streamLoading} 
+          getProgress={getProgress} 
+          toggleWatchlist={toggleWatchlist} 
+          inList={inList} 
+        />
 
         {type === 'tv' && (
-          <div className="episodes-section">
-            <div className="episodes-header">
-              <h3>Episodes</h3>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <select 
-                  value={selectedSeason} 
-                  onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                  className="season-select"
-                >
-                  {Array.from({ length: movie.number_of_seasons || 1 }).map((_, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      Season {i + 1}
-                    </option>
-                  ))}
-                </select>
-                <button 
-                  className="btn-download-netflix" 
-                  style={{ width: 'auto', padding: '0 1rem', borderRadius: '4px', height: '38px', fontSize: '0.9rem', gap: '0.5rem' }}
-                  onClick={() => {
-                    const seasonStr = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
-                    const query = `${movie.title || movie.name} ${seasonStr}`.trim();
-                    fetchTorrents(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), movie.title || movie.name, query);
-                    document.getElementById('torbox-streams-section')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                >
-                  <Download size={16} /> Season
-                </button>
-              </div>
-            </div>
-            
-            {loadingSeason ? (
-              <div className="spinner-small"></div>
-            ) : seasonData && seasonData.episodes ? (
-              <div className="episodes-list">
-                {seasonData.episodes.map((episode) => {
-                  
-                  // Check if this specific episode is available in TorBox cloud
-                  let isDownloaded = false;
-                  if (torboxList && torboxList.length > 0 && movie) {
-                    const showName = movie.title || movie.name;
-                    const nameRegex = new RegExp((showName || '').replace(/[^a-zA-Z0-9]/g, '.*'), 'i');
-                    const sStr = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
-                    const eStr = episode.episode_number < 10 ? `E0${episode.episode_number}` : `E${episode.episode_number}`;
-                    const epRegex = new RegExp(`[S]?0?${selectedSeason}[Ex]0?${episode.episode_number}`, 'i');
-                    
-                    for (const t of torboxList) {
-                      if (nameRegex.test(t.name) || (t.files && t.files.length > 0 && nameRegex.test(t.files[0].name))) {
-                        for (const f of t.files || []) {
-                          if (!f.name.match(/\.(mp4|mkv|avi|webm)$/i)) continue;
-                          if (epRegex.test(f.name) || f.name.includes(`${sStr}${eStr}`)) {
-                            isDownloaded = true;
-                            break;
-                          }
-                        }
-                      }
-                      if (isDownloaded) break;
-                    }
-                  }
-
-                  return (
-                    <div 
-                      key={episode.id} 
-                      className="episode-item"
-                      onClick={() => handleWatchEpisode(selectedSeason, episode.episode_number)}
-                    >
-                      <div className="episode-number">{episode.episode_number}</div>
-                      <div className="episode-thumbnail">
-                        {episode.still_path ? (
-                          <img src={`https://image.tmdb.org/t/p/w300${episode.still_path}`} alt={episode.name} />
-                        ) : (
-                          <div className="episode-no-image">No Image</div>
-                        )}
-                        <Play className="episode-play-icon" size={32} />
-                      </div>
-                      <div className="episode-info">
-                        <div className="episode-title-row">
-                          <h4>{episode.name}</h4>
-                          <span className="episode-runtime">{episode.runtime}m</span>
-                        </div>
-                        <p className="episode-overview">{episode.overview || 'No description available.'}</p>
-                      </div>
-                      <button 
-                        className="btn-download-netflix"
-                        disabled={isDownloaded}
-                        style={{ opacity: isDownloaded ? 0.5 : 1, cursor: isDownloaded ? 'default' : 'pointer' }}
-                        title={isDownloaded ? "Available in TorBox Cloud" : "Find Torrents"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isDownloaded) return;
-                          const s = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
-                          const ep = episode.episode_number < 10 ? `E0${episode.episode_number}` : `E${episode.episode_number}`;
-                          const query = `${movie.title || movie.name} ${s}${ep}`.trim();
-                          fetchTorrents(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), movie.title || movie.name, query);
-                          document.getElementById('torbox-streams-section')?.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                      >
-                        {isDownloaded ? <Check size={20} color="#46d369" /> : <Download size={20} />}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
+          <EpisodesList 
+            movie={movie}
+            selectedSeason={selectedSeason}
+            setSelectedSeason={setSelectedSeason}
+            fetchTorrents={fetchTorrents}
+            loadingSeason={loadingSeason}
+            seasonData={seasonData}
+            torboxList={torboxList}
+            handleWatchEpisode={handleWatchEpisode}
+          />
         )}
 
-        <div id="torbox-streams-section" className="torbox-section">
-          <div className="torbox-header">
-            <h3>{currentSearchTitle || (type === 'tv' ? 'Global TorBox Streams (Whole Show)' : 'Streams')}</h3>
-            {loadingTorrents && <div className="spinner-small"></div>}
-          </div>
-          
-          <div className="torrents-list">
-            {!loadingTorrents && torrents.length === 0 && (
-              <p className="no-torrents">No TorBox streams found for this title.</p>
-            )}
-            
-            {torrents.map((t, idx) => (
-              <div key={idx} className="torrent-item-netflix" style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderBottomColor: 'rgba(255,255,255,0.05)' }}>
-                <div className="torrent-index">{idx + 1}</div>
-                <div className="torrent-info-netflix">
-                  <h4 className="torrent-name-netflix">
-                    {t.name}
-                    {t.isCached && <span style={{marginLeft: '8px', color: '#46d369', fontSize: '0.8rem', fontWeight: 'bold'}}>⚡ Instant Play</span>}
-                  </h4>
-                  <div className="torrent-meta-netflix">
-                    <span>{(t.size / 1024 / 1024 / 1024).toFixed(2)} GB</span>
-                    <span className="torrent-seeders-netflix">S: {t.seeders}</span>
-                  </div>
-                </div>
-                <button 
-                  className="btn-download-netflix" 
-                  disabled={isMagnetDownloaded(t.magnet)}
-                  style={{ opacity: isMagnetDownloaded(t.magnet) ? 0.5 : 1, cursor: isMagnetDownloaded(t.magnet) ? 'default' : 'pointer' }}
-                  onClick={() => handleDownload(t.magnet)}
-                  title={isMagnetDownloaded(t.magnet) ? "Already in TorBox Downloads" : "Download to TorBox"}
-                >
-                  {isMagnetDownloaded(t.magnet) ? <Check size={20} color="#46d369" /> : <Download size={20} />}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <StreamList 
+          currentSearchTitle={currentSearchTitle}
+          type={type}
+          loadingTorrents={loadingTorrents}
+          torrents={torrents}
+          isMagnetDownloaded={isMagnetDownloaded}
+          handleDownload={handleDownload}
+        />
 
-        {/* Cast Spotlight */}
-        {movie.credits && movie.credits.cast && movie.credits.cast.length > 0 && (
-          <div className="cast-section">
-            <h3 className="section-header">Cast Spotlight</h3>
-            <div className="cast-scroll">
-              {movie.credits.cast.slice(0, 10).map(actor => (
-                <div 
-                  key={actor.id} 
-                  className={`cast-card ${selectedActor === actor.id ? 'active' : ''}`}
-                  onClick={() => handleActorClick(actor)}
-                >
-                  <img 
-                    src={actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : 'https://via.placeholder.com/185x278?text=No+Image'} 
-                    alt={actor.name} 
-                    className="cast-photo"
-                  />
-                  <p className="cast-name">{actor.name}</p>
-                  <p className="cast-character">{actor.character}</p>
-                </div>
-              ))}
-            </div>
-            
-            {selectedActor && actorCredits.length > 0 && (
-              <div className="actor-filmography fade-in">
-                <h4>More from {movie.credits.cast.find(a => a.id === selectedActor)?.name}</h4>
-                <div className="similar-grid">
-                  {actorCredits.slice(0, 6).map(credit => (
-                    <div key={credit.credit_id || credit.id} className="similar-card" onClick={() => {
-                      navigate(`/${credit.media_type || 'movie'}/${credit.id}`);
-                      window.scrollTo(0, 0);
-                    }}>
-                      <div className="similar-poster">
-                        <img 
-                          src={`https://image.tmdb.org/t/p/w500${credit.backdrop_path || credit.poster_path}`} 
-                          alt={credit.title || credit.name} 
-                        />
-                      </div>
-                      <div className="similar-info">
-                        <div className="similar-meta-top">
-                          <span className="match-score">{(credit.vote_average * 10).toFixed(0)}% Match</span>
-                        </div>
-                        <p className="similar-title">{credit.title || credit.name}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        <CastSpotlight 
+          movie={movie}
+          selectedActor={selectedActor}
+          actorCredits={actorCredits}
+          handleActorClick={handleActorClick}
+        />
 
-        {/* Smart Collections Hub */}
-        {collectionData && collectionData.parts && collectionData.parts.length > 0 && (
-          <div className="collection-section">
-            <h3 className="section-header">{collectionData.name}</h3>
-            <p className="collection-overview">{collectionData.overview}</p>
-            <div className="similar-grid">
-              {collectionData.parts.map(part => (
-                <div key={part.id} className="similar-card" onClick={() => {
-                  navigate(`/movie/${part.id}`);
-                  window.scrollTo(0, 0);
-                }}>
-                  <div className="similar-poster">
-                    <img 
-                      src={`https://image.tmdb.org/t/p/w500${part.backdrop_path || part.poster_path}`} 
-                      alt={part.title} 
-                    />
-                    <div className="similar-play-icon">
-                      <Play fill="white" size={24} />
-                    </div>
-                  </div>
-                  <div className="similar-info">
-                    <div className="similar-meta-top">
-                      <span className="match-score">{(part.vote_average * 10).toFixed(0)}% Match</span>
-                      <div className="similar-badge">
-                        {part.release_date?.substring(0,4)}
-                      </div>
-                    </div>
-                    <p className="similar-title" style={{fontWeight: 'bold', margin: '0 0 0.5rem 0'}}>{part.title}</p>
-                    <p className="similar-overview">
-                      {part.overview 
-                        ? (part.overview.length > 80 ? part.overview.substring(0, 80) + '...' : part.overview) 
-                        : 'No description available.'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <SmartCollections collectionData={collectionData} />
 
-        {movie.similar && movie.similar.results && movie.similar.results.length > 0 && (
-          <div className="similar-section">
-            <h3 className="similar-header">More Like This</h3>
-            <div className="similar-grid">
-              {movie.similar.results.slice(0, 12).map((similarItem) => {
-                const similarMatch = (similarItem.vote_average * 10).toFixed(0);
-                const isTv = type === 'tv';
-                return (
-                  <div key={similarItem.id} className="similar-card" onClick={() => {
-                    navigate(`/${isTv ? 'tv' : 'movie'}/${similarItem.id}`);
-                    window.scrollTo(0, 0);
-                  }}>
-                    <div className="similar-poster">
-                      <img 
-                        src={`https://image.tmdb.org/t/p/w500${similarItem.backdrop_path || similarItem.poster_path}`} 
-                        alt={similarItem.title || similarItem.name} 
-                      />
-                      <div className="similar-play-icon">
-                        <Play fill="white" size={24} />
-                      </div>
-                    </div>
-                    <div className="similar-info">
-                      <div className="similar-meta-top">
-                        <span className="match-score">{similarMatch}% Match</span>
-                        <div className="similar-badge">
-                          {isTv ? (similarItem.number_of_episodes ? `${similarItem.number_of_episodes} Episodes` : 'TV Series') : (similarItem.release_date?.substring(0,4))}
-                        </div>
-                        <Plus className="similar-add-btn" size={24} />
-                      </div>
-                      <p className="similar-overview">
-                        {similarItem.overview 
-                          ? (similarItem.overview.length > 100 ? similarItem.overview.substring(0, 100) + '...' : similarItem.overview) 
-                          : 'No description available.'}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <SimilarGrid movie={movie} type={type} />
       </div>
     </div>
   );
