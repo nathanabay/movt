@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
-import { Play, Download, X, Plus, ArrowLeft, Check, List } from 'lucide-react';
+import { Play, Download, X, Plus, ArrowLeft, Check, List, PictureInPicture } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './MovieDetails.css';
 import './TorboxStreams.css';
@@ -52,6 +52,7 @@ const MovieDetails = ({ type }) => {
   
   // Skip Intro State
   const [showSkipIntro, setShowSkipIntro] = useState(false);
+  const [isPiPActive, setIsPiPActive] = useState(false);
 
   const handleDownload = async (magnet) => {
     try {
@@ -141,6 +142,14 @@ const MovieDetails = ({ type }) => {
 
   const handlePlayerReady = (player) => {
     playerRef.current = player;
+    
+    // PiP Event Listeners
+    const videoNode = player.el().querySelector('video');
+    if (videoNode) {
+      videoNode.addEventListener('enterpictureinpicture', () => setIsPiPActive(true));
+      videoNode.addEventListener('leavepictureinpicture', () => setIsPiPActive(false));
+    }
+
     // Attempt to resume playback
     const history = getProgress(movie.id);
     if (history && history.currentTime && history.currentTime > 5) {
@@ -279,14 +288,14 @@ const MovieDetails = ({ type }) => {
                   const videoElement = document.querySelector('.video-js video');
                   if (videoElement && document.pictureInPictureEnabled) {
                     if (document.pictureInPictureElement) {
-                      document.exitPictureInPicture();
+                      document.exitPictureInPicture().catch(()=>toast.error("Failed to exit PiP"));
                     } else {
-                      videoElement.requestPictureInPicture();
+                      videoElement.requestPictureInPicture().catch(()=>toast.error("Failed to enter PiP"));
                     }
                   }
                 }}
               >
-                🪟 PiP
+                <PictureInPicture size={20} /> {isPiPActive ? 'Exit PiP' : 'PiP'}
               </button>
 
             {type === 'tv' && playingTvContext && seasonData && (
