@@ -39,29 +39,31 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
         </div>
         
         {torrents && torrents.length > 0 && (
-          <div className="quality-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative', zIndex: 100 }}>
-            <label style={{ fontSize: '0.9rem', color: '#ccc' }}>Quality:</label>
-            <select 
-              value={selectedQuality}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => setSelectedQuality(e.target.value)}
-              className="quality-dropdown-select"
-              style={{
-                backgroundColor: '#333',
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.2)',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                outline: 'none',
-                cursor: 'pointer',
-                WebkitAppearance: 'auto',
-                minWidth: '120px'
-              }}
-            >
-              {availableQualities.map(q => (
-                <option key={q} value={q} style={{ backgroundColor: '#333', color: '#fff' }}>{q === 'All' ? 'All Qualities' : q}</option>
-              ))}
-            </select>
+          <div className="quality-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+            <span style={{ fontSize: '0.9rem', color: '#ccc', marginRight: '4px' }}>Quality:</span>
+            {availableQualities.map(q => (
+              <button
+                key={q}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedQuality(q);
+                }}
+                style={{
+                  backgroundColor: selectedQuality === q ? '#e50914' : 'rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  fontWeight: selectedQuality === q ? 'bold' : 'normal',
+                  whiteSpace: 'nowrap',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                {q === 'All' ? 'All' : q}
+              </button>
+            ))}
           </div>
         )}
       </div>

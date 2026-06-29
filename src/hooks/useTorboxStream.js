@@ -99,6 +99,10 @@ export const useTorboxStream = (movie, type) => {
       if (autoplayCountdown !== null) setAutoplayCountdown(null);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
       
+      if (requestAbortController.current) requestAbortController.current.abort();
+      requestAbortController.current = new AbortController();
+      const signal = requestAbortController.current.signal;
+      
       setStreamLoading(true);
       const showName = movie.title || movie.name;
       const { getEpisodeStreamUrl } = await import('../services/torbox');
