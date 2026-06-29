@@ -41,83 +41,58 @@ const Home = () => {
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
-        const [
-          trendingData, trendingTvData, popularMoviesData, topRatedMoviesData, upcomingMoviesData, popularTvData, topRatedTvData,
-          nowPlayingData, onTheAirData, airingTodayData, animeData, kDramaData,
-          actionData, comedyData, sciFiData, horrorData, romanceData, animationData,
-          dramaData, thrillerData, crimeData, mysteryData, documentaryData,
-          familyData, historyData, musicData, warData, westernData,
-          actionTvData, comedyTvData, realityTvData
-        ] = await Promise.all([
-          fetchTrending('movie'),
-          fetchTrending('tv'),
-          fetchPopular('movie'),
-          fetchTopRated('movie'),
-          fetchUpcoming(),
-          fetchPopular('tv'),
-          fetchTopRated('tv'),
-          fetchNowPlaying(),
-          fetchOnTheAir(),
-          fetchAiringToday(),
-          fetchAnime(),
-          fetchKDramas(),
-          fetchGenreContent(28, 'movie'),
-          fetchGenreContent(35, 'movie'),
-          fetchGenreContent(878, 'movie'),
-          fetchGenreContent(27, 'movie'),
-          fetchGenreContent(10749, 'movie'),
-          fetchGenreContent(16, 'movie'),
-          fetchGenreContent(18, 'movie'),
-          fetchGenreContent(53, 'movie'),
-          fetchGenreContent(80, 'movie'),
-          fetchGenreContent(9648, 'movie'),
-          fetchGenreContent(99, 'movie'),
-          fetchGenreContent(10751, 'movie'),
-          fetchGenreContent(36, 'movie'),
-          fetchGenreContent(10402, 'movie'),
-          fetchGenreContent(10752, 'movie'),
-          fetchGenreContent(37, 'movie'),
-          fetchGenreContent(10759, 'tv'),
-          fetchGenreContent(35, 'tv'),
-          fetchGenreContent(10764, 'tv')
-        ]);
+        // Core fetch first to quickly show hero section
+        const trendingRes = await fetchTrending('movie');
+        setTrending(trendingRes.results);
+        setLoading(false);
 
-        setTrending(trendingData.results);
-        setCatalogs({
-          'Now Playing in Theaters': nowPlayingData.results,
-          'Popular Movies': popularMoviesData.results,
-          'Popular TV Shows': popularTvData.results,
-          'On The Air': onTheAirData.results,
-          'Top Rated Movies': topRatedMoviesData.results,
-          'Top Rated TV Shows': topRatedTvData.results,
-          'Upcoming Movies': upcomingMoviesData.results,
-          'Trending TV Shows': trendingTvData.results,
-          'Airing Today': airingTodayData.results,
-          'Top Rated Action': actionData.results,
-          'Top Rated Comedies': comedyData.results,
-          'Sci-Fi & Fantasy': sciFiData.results,
-          'Horror Movies': horrorData.results,
-          'Thriller': thrillerData.results,
-          'Crime': crimeData.results,
-          'Mystery': mysteryData.results,
-          'Drama': dramaData.results,
-          'Anime': animeData.results,
-          'K-Dramas': kDramaData.results,
-          'Romance': romanceData.results,
-          'Family Movies': familyData.results,
-          'Animation': animationData.results,
-          'History': historyData.results,
-          'Music': musicData.results,
-          'War': warData.results,
-          'Western': westernData.results,
-          'Action & Adventure TV': actionTvData.results,
-          'Comedy TV Shows': comedyTvData.results,
-          'Reality TV': realityTvData.results,
-          'Documentaries': documentaryData.results
+        const catalogDefinitions = [
+          { name: 'Now Playing in Theaters', fetcher: fetchNowPlaying },
+          { name: 'Popular Movies', fetcher: () => fetchPopular('movie') },
+          { name: 'Popular TV Shows', fetcher: () => fetchPopular('tv') },
+          { name: 'On The Air', fetcher: fetchOnTheAir },
+          { name: 'Top Rated Movies', fetcher: () => fetchTopRated('movie') },
+          { name: 'Top Rated TV Shows', fetcher: () => fetchTopRated('tv') },
+          { name: 'Upcoming Movies', fetcher: fetchUpcoming },
+          { name: 'Trending TV Shows', fetcher: () => fetchTrending('tv') },
+          { name: 'Airing Today', fetcher: fetchAiringToday },
+          { name: 'Top Rated Action', fetcher: () => fetchGenreContent(28, 'movie') },
+          { name: 'Top Rated Comedies', fetcher: () => fetchGenreContent(35, 'movie') },
+          { name: 'Sci-Fi & Fantasy', fetcher: () => fetchGenreContent(878, 'movie') },
+          { name: 'Horror Movies', fetcher: () => fetchGenreContent(27, 'movie') },
+          { name: 'Thriller', fetcher: () => fetchGenreContent(53, 'movie') },
+          { name: 'Crime', fetcher: () => fetchGenreContent(80, 'movie') },
+          { name: 'Mystery', fetcher: () => fetchGenreContent(9648, 'movie') },
+          { name: 'Drama', fetcher: () => fetchGenreContent(18, 'movie') },
+          { name: 'Anime', fetcher: fetchAnime },
+          { name: 'K-Dramas', fetcher: fetchKDramas },
+          { name: 'Romance', fetcher: () => fetchGenreContent(10749, 'movie') },
+          { name: 'Family Movies', fetcher: () => fetchGenreContent(10751, 'movie') },
+          { name: 'Animation', fetcher: () => fetchGenreContent(16, 'movie') },
+          { name: 'History', fetcher: () => fetchGenreContent(36, 'movie') },
+          { name: 'Music', fetcher: () => fetchGenreContent(10402, 'movie') },
+          { name: 'War', fetcher: () => fetchGenreContent(10752, 'movie') },
+          { name: 'Western', fetcher: () => fetchGenreContent(37, 'movie') },
+          { name: 'Action & Adventure TV', fetcher: () => fetchGenreContent(10759, 'tv') },
+          { name: 'Comedy TV Shows', fetcher: () => fetchGenreContent(35, 'tv') },
+          { name: 'Reality TV', fetcher: () => fetchGenreContent(10764, 'tv') },
+          { name: 'Documentaries', fetcher: () => fetchGenreContent(99, 'movie') }
+        ];
+
+        // Fetch the rest of the catalogs with Promise.allSettled
+        // This ensures if one fails, it doesn't break the entire page
+        const results = await Promise.allSettled(catalogDefinitions.map(def => def.fetcher()));
+        
+        const newCatalogs = {};
+        results.forEach((result, idx) => {
+          if (result.status === 'fulfilled' && result.value && result.value.results) {
+            newCatalogs[catalogDefinitions[idx].name] = result.value.results;
+          }
         });
+        
+        setCatalogs(newCatalogs);
       } catch (err) {
         setError(err.message);
-      } finally {
         setLoading(false);
       }
     };

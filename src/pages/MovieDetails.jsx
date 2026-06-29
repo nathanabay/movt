@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
 import { Play, Download, X, Plus, ArrowLeft, Check, List } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { getDetails, getTvSeasonDetails } from '../services/tmdb';
 import { searchTorbox } from '../services/torbox';
 import { fetchSubtitles } from '../services/subtitles';
@@ -183,9 +184,9 @@ const MovieDetails = ({ type }) => {
 
   const handleDownload = async (magnet) => {
     try {
-      alert('Adding torrent to TorBox...');
+      toast('Adding torrent to TorBox...', { icon: '⏳' });
       const result = await import('../services/torbox').then(m => m.addTorrent(magnet));
-      alert('Success! Torrent added to TorBox: ' + (result?.torrent_id || ''));
+      toast.success('Success! Torrent added to TorBox: ' + (result?.torrent_id || ''));
       setDownloadedMagnets(prev => {
         const next = new Set(prev);
         next.add(magnet);
@@ -194,7 +195,7 @@ const MovieDetails = ({ type }) => {
       // Refresh torbox list so episodes reflect the download instantly
       setTimeout(() => fetchMyTorboxList(), 1500);
     } catch (err) {
-      alert('Error adding torrent: ' + err.message);
+      toast.error('Error adding torrent: ' + err.message);
     }
   };
 
@@ -223,7 +224,8 @@ const MovieDetails = ({ type }) => {
       }
 
       if (!targetMagnet) {
-        alert("No streams available to watch.");
+        toast.error("No streams available to watch.");
+        setStreamLoading(false);
         return;
       }
 
@@ -236,7 +238,7 @@ const MovieDetails = ({ type }) => {
       
       setStreamUrl(data.url);
     } catch (err) {
-      alert('Failed to stream movie: ' + err.message);
+      toast.error('Failed to stream movie: ' + err.message);
     } finally {
       setStreamLoading(false);
     }
@@ -261,7 +263,7 @@ const MovieDetails = ({ type }) => {
       
       setStreamUrl(data.url);
     } catch (err) {
-      alert('Failed to stream episode: ' + err.message);
+      toast.error('Failed to stream episode: ' + err.message);
       setAutoplayCountdown(null);
     } finally {
       setStreamLoading(false);
@@ -482,7 +484,7 @@ const MovieDetails = ({ type }) => {
                                   setStreamUrl(url);
                                   setTimeout(() => p.currentTime(currentTime), 500);
                                 }
-                              } catch(e) { alert("Failed to switch quality"); }
+                              } catch(e) { toast.error("Failed to switch quality"); }
                             }}>
                               <span className="ep-name">{label}</span>
                             </div>

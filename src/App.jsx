@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
+import { Toaster } from 'react-hot-toast';
 import './App.css';
 
 // Lazy load pages
@@ -20,6 +21,7 @@ function App() {
   return (
     <Router>
       <div className="app">
+        <Toaster position="bottom-right" />
         <Navbar />
         <main className="main-content">
           <Suspense fallback={<PageLoader />}>
