@@ -65,6 +65,14 @@ app.get('/api/auth/me', authenticate, (req, res) => {
   res.json({ user: req.user });
 });
 
+app.get('/api/test-env', (req, res) => {
+  res.json({ 
+    hasTorbox: !!process.env.VITE_TORBOX_API_KEY,
+    keyLength: process.env.VITE_TORBOX_API_KEY ? process.env.VITE_TORBOX_API_KEY.length : 0,
+    dirname: __dirname
+  });
+});
+
 app.get('/api/watchlist', authenticate, async (req, res) => {
   res.json(await getWatchlist(req.user.id));
 });

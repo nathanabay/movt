@@ -1,6 +1,6 @@
 #!/usr/bin/expect -f
 set timeout 120
-spawn ssh -i /Users/nathanamare/Downloads/bespoet/besponate bespoet@bespo.et "cd /home/bespoet/repositories/movt && git reset --hard && git clean -fd && git pull && mkdir -p tmp && touch tmp/restart.txt"
+spawn ssh -i /Users/nathanamare/Downloads/bespoet/besponate bespoet@bespo.et "cd /home/bespoet/repositories/movt && printf 'VITE_TMDB_API_KEY=ad135a8e5c5b0915dd7a498e5416ca26\\nVITE_TORBOX_API_KEY=de060e0f-17e0-4d03-aa55-a3296398e1fb\\n' > .env && touch tmp/restart.txt && cat .env"
 expect "*assword:*"
 send "aND1AND12$\r"
 expect eof
