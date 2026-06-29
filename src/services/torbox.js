@@ -165,10 +165,20 @@ export const getStreamUrl = async (magnetLink) => {
     const maxRetries = 30; // 60 seconds
     
     while (retries < maxRetries) {
-      const listRes = await fetch(`/api/torbox/mylist`);
+      const listRes = await fetch(`/api/torbox/mylist?id=${torrentId}`);
+      if (!listRes.ok) {
+        retries++;
+        await new Promise(resolve => setTimeout(resolve, 4000));
+        continue;
+      }
+      
       const listData = await listRes.json();
-      const torrents = listData.data || [];
-      torrent = torrents.find(t => t.id === torrentId || t.id === Number(torrentId));
+      torrent = listData.data; // TorBox returns the single object if id is provided
+      
+      // Fallback if TorBox ignored the id parameter and returned an array
+      if (Array.isArray(torrent)) {
+        torrent = torrent.find(t => t.id === torrentId || t.id === Number(torrentId));
+      }
       
       if (torrent && (torrent.download_state === 'cached' || torrent.download_state === 'completed' || torrent.download_state === 'downloading') && torrent.files && torrent.files.length > 0) {
         break;
@@ -176,8 +186,7 @@ export const getStreamUrl = async (magnetLink) => {
       
       retries++;
       if (retries < maxRetries) {
-        // Wait 2 seconds before polling again
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 4000));
       }
     }
     

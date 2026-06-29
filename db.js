@@ -18,8 +18,9 @@ const pool = mysql.createPool({
 
 // Initialize Schema
 const initDB = async () => {
+  let connection;
   try {
-    const connection = await pool.getConnection();
+    connection = await pool.getConnection();
     
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
@@ -62,10 +63,11 @@ const initDB = async () => {
       )
     `);
     
-    connection.release();
     console.log('MySQL Database initialized successfully');
   } catch (err) {
     console.error('Database Initialization failed:', err.message);
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -74,7 +76,7 @@ initDB();
 
 // --- User Operations ---
 export const createUser = async (username, password) => {
-  const hash = bcrypt.hashSync(password, 10);
+  const hash = await bcrypt.hash(password, 10);
   try {
     const [result] = await pool.execute(
       'INSERT INTO users (username, password_hash) VALUES (?, ?)',
@@ -94,7 +96,7 @@ export const verifyUser = async (username, password) => {
   const user = rows[0];
   if (!user) throw new Error('Invalid username or password');
   
-  const valid = bcrypt.compareSync(password, user.password_hash);
+  const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) throw new Error('Invalid username or password');
   
   return { id: user.id, username: user.username };

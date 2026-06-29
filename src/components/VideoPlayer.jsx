@@ -49,10 +49,9 @@ export const VideoPlayer = ({ options, onReady }) => {
   };
 
   useEffect(() => {
-    const player = playerRef.current;
     return () => {
-      if (player && !player.isDisposed()) {
-        player.dispose();
+      if (playerRef.current && !playerRef.current.isDisposed()) {
+        playerRef.current.dispose();
         playerRef.current = null;
       }
       if (rippleTimerRef.current) clearTimeout(rippleTimerRef.current);
