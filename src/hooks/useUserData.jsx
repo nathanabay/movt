@@ -1,4 +1,5 @@
 import { useState, useEffect, createContext, useContext, useMemo } from 'react';
+import debounce from 'lodash.debounce';
 import { useAuth } from '../context/AuthContext';
 
 const UserDataContext = createContext();
@@ -102,6 +103,28 @@ export const UserDataProvider = ({ children }) => {
     return watchlist.some(m => m.id === id || m.id === String(id));
   };
 
+  const syncProgressToDB = useMemo(
+    () =>
+      debounce(async (authToken, movieData, progressData) => {
+        try {
+          await fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+            body: JSON.stringify({
+              item: movieData,
+              progress: progressData.currentTime || 0,
+              duration: progressData.duration || 0,
+              season: progressData.season || null,
+              episode: progressData.episode || null
+            })
+          });
+        } catch (e) {
+          console.error("Failed to sync progress to DB", e);
+        }
+      }, 5000, { maxWait: 30000 }), // Wait 5s after pause, but force write every 30s while playing
+    []
+  );
+
   const saveProgress = async (id, progressData, movieData = null) => {
     setHistory(prev => ({
       ...prev,
@@ -113,19 +136,7 @@ export const UserDataProvider = ({ children }) => {
     }));
 
     if (user && token && movieData) {
-      // Debounce this in a real app, but for now we'll just fire it. 
-      // The audit report mentioned localStorage abuse, but saving to state/context is fine.
-      await fetch('/api/history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          item: movieData,
-          progress: progressData.currentTime || 0,
-          duration: progressData.duration || 0,
-          season: progressData.season || null,
-          episode: progressData.episode || null
-        })
-      });
+      syncProgressToDB(token, movieData, progressData);
     }
   };
 
