@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
+import { useRef, useMemo } from 'react';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { fetchTrending, fetchGenreContent, fetchPopular, fetchTopRated, fetchUpcoming, fetchNowPlaying, fetchOnTheAir, fetchAiringToday, fetchAnime, fetchKDramas } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
@@ -25,10 +26,6 @@ const PrevArrow = ({ onClick }) => (
 );
 
 const Home = () => {
-  const [trending, setTrending] = useState([]);
-  const [catalogs, setCatalogs] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const trendingSliderRef = useRef(null);
@@ -38,67 +35,62 @@ const Home = () => {
   const { getContinueWatchingList } = useWatchHistory();
   const continueWatching = getContinueWatchingList();
 
-  useEffect(() => {
-    const loadCatalogs = async () => {
-      try {
-        // Core fetch first to quickly show hero section
-        const trendingRes = await fetchTrending('movie');
-        setTrending(trendingRes.results);
-        setLoading(false);
+  const { data: trendingRes, isLoading: trendingLoading, error: trendingError } = useQuery({
+    queryKey: ['trending', 'movie'],
+    queryFn: () => fetchTrending('movie')
+  });
 
-        const catalogDefinitions = [
-          { name: 'Now Playing in Theaters', fetcher: fetchNowPlaying },
-          { name: 'Popular Movies', fetcher: () => fetchPopular('movie') },
-          { name: 'Popular TV Shows', fetcher: () => fetchPopular('tv') },
-          { name: 'On The Air', fetcher: fetchOnTheAir },
-          { name: 'Top Rated Movies', fetcher: () => fetchTopRated('movie') },
-          { name: 'Top Rated TV Shows', fetcher: () => fetchTopRated('tv') },
-          { name: 'Upcoming Movies', fetcher: fetchUpcoming },
-          { name: 'Trending TV Shows', fetcher: () => fetchTrending('tv') },
-          { name: 'Airing Today', fetcher: fetchAiringToday },
-          { name: 'Top Rated Action', fetcher: () => fetchGenreContent(28, 'movie') },
-          { name: 'Top Rated Comedies', fetcher: () => fetchGenreContent(35, 'movie') },
-          { name: 'Sci-Fi & Fantasy', fetcher: () => fetchGenreContent(878, 'movie') },
-          { name: 'Horror Movies', fetcher: () => fetchGenreContent(27, 'movie') },
-          { name: 'Thriller', fetcher: () => fetchGenreContent(53, 'movie') },
-          { name: 'Crime', fetcher: () => fetchGenreContent(80, 'movie') },
-          { name: 'Mystery', fetcher: () => fetchGenreContent(9648, 'movie') },
-          { name: 'Drama', fetcher: () => fetchGenreContent(18, 'movie') },
-          { name: 'Anime', fetcher: fetchAnime },
-          { name: 'K-Dramas', fetcher: fetchKDramas },
-          { name: 'Romance', fetcher: () => fetchGenreContent(10749, 'movie') },
-          { name: 'Family Movies', fetcher: () => fetchGenreContent(10751, 'movie') },
-          { name: 'Animation', fetcher: () => fetchGenreContent(16, 'movie') },
-          { name: 'History', fetcher: () => fetchGenreContent(36, 'movie') },
-          { name: 'Music', fetcher: () => fetchGenreContent(10402, 'movie') },
-          { name: 'War', fetcher: () => fetchGenreContent(10752, 'movie') },
-          { name: 'Western', fetcher: () => fetchGenreContent(37, 'movie') },
-          { name: 'Action & Adventure TV', fetcher: () => fetchGenreContent(10759, 'tv') },
-          { name: 'Comedy TV Shows', fetcher: () => fetchGenreContent(35, 'tv') },
-          { name: 'Reality TV', fetcher: () => fetchGenreContent(10764, 'tv') },
-          { name: 'Documentaries', fetcher: () => fetchGenreContent(99, 'movie') }
-        ];
+  const catalogDefinitions = useMemo(() => [
+    { name: 'Now Playing in Theaters', fetcher: fetchNowPlaying, key: 'now_playing' },
+    { name: 'Popular Movies', fetcher: () => fetchPopular('movie'), key: ['popular', 'movie'] },
+    { name: 'Popular TV Shows', fetcher: () => fetchPopular('tv'), key: ['popular', 'tv'] },
+    { name: 'On The Air', fetcher: fetchOnTheAir, key: 'on_the_air' },
+    { name: 'Top Rated Movies', fetcher: () => fetchTopRated('movie'), key: ['top_rated', 'movie'] },
+    { name: 'Top Rated TV Shows', fetcher: () => fetchTopRated('tv'), key: ['top_rated', 'tv'] },
+    { name: 'Upcoming Movies', fetcher: fetchUpcoming, key: 'upcoming' },
+    { name: 'Trending TV Shows', fetcher: () => fetchTrending('tv'), key: ['trending', 'tv'] },
+    { name: 'Airing Today', fetcher: fetchAiringToday, key: 'airing_today' },
+    { name: 'Top Rated Action', fetcher: () => fetchGenreContent(28, 'movie'), key: ['genre', 28, 'movie'] },
+    { name: 'Top Rated Comedies', fetcher: () => fetchGenreContent(35, 'movie'), key: ['genre', 35, 'movie'] },
+    { name: 'Sci-Fi & Fantasy', fetcher: () => fetchGenreContent(878, 'movie'), key: ['genre', 878, 'movie'] },
+    { name: 'Horror Movies', fetcher: () => fetchGenreContent(27, 'movie'), key: ['genre', 27, 'movie'] },
+    { name: 'Thriller', fetcher: () => fetchGenreContent(53, 'movie'), key: ['genre', 53, 'movie'] },
+    { name: 'Crime', fetcher: () => fetchGenreContent(80, 'movie'), key: ['genre', 80, 'movie'] },
+    { name: 'Mystery', fetcher: () => fetchGenreContent(9648, 'movie'), key: ['genre', 9648, 'movie'] },
+    { name: 'Drama', fetcher: () => fetchGenreContent(18, 'movie'), key: ['genre', 18, 'movie'] },
+    { name: 'Anime', fetcher: fetchAnime, key: 'anime' },
+    { name: 'K-Dramas', fetcher: fetchKDramas, key: 'kdramas' },
+    { name: 'Romance', fetcher: () => fetchGenreContent(10749, 'movie'), key: ['genre', 10749, 'movie'] },
+    { name: 'Family Movies', fetcher: () => fetchGenreContent(10751, 'movie'), key: ['genre', 10751, 'movie'] },
+    { name: 'Animation', fetcher: () => fetchGenreContent(16, 'movie'), key: ['genre', 16, 'movie'] },
+    { name: 'History', fetcher: () => fetchGenreContent(36, 'movie'), key: ['genre', 36, 'movie'] },
+    { name: 'Music', fetcher: () => fetchGenreContent(10402, 'movie'), key: ['genre', 10402, 'movie'] },
+    { name: 'War', fetcher: () => fetchGenreContent(10752, 'movie'), key: ['genre', 10752, 'movie'] },
+    { name: 'Western', fetcher: () => fetchGenreContent(37, 'movie'), key: ['genre', 37, 'movie'] },
+    { name: 'Action & Adventure TV', fetcher: () => fetchGenreContent(10759, 'tv'), key: ['genre', 10759, 'tv'] },
+    { name: 'Comedy TV Shows', fetcher: () => fetchGenreContent(35, 'tv'), key: ['genre', 35, 'tv'] },
+    { name: 'Reality TV', fetcher: () => fetchGenreContent(10764, 'tv'), key: ['genre', 10764, 'tv'] },
+    { name: 'Documentaries', fetcher: () => fetchGenreContent(99, 'movie'), key: ['genre', 99, 'movie'] }
+  ], []);
 
-        // Fetch the rest of the catalogs with Promise.allSettled
-        // This ensures if one fails, it doesn't break the entire page
-        const results = await Promise.allSettled(catalogDefinitions.map(def => def.fetcher()));
-        
-        const newCatalogs = {};
-        results.forEach((result, idx) => {
-          if (result.status === 'fulfilled' && result.value && result.value.results) {
-            newCatalogs[catalogDefinitions[idx].name] = result.value.results;
-          }
-        });
-        
-        setCatalogs(newCatalogs);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-    
-    loadCatalogs();
-  }, []);
+  const catalogQueries = useQueries({
+    queries: catalogDefinitions.map(def => ({
+      queryKey: Array.isArray(def.key) ? def.key : [def.key],
+      queryFn: def.fetcher,
+      staleTime: 10 * 60 * 1000, // 10 minutes specifically for catalogs
+    }))
+  });
+
+  const loading = trendingLoading;
+  const error = trendingError ? trendingError.message : null;
+  const trending = trendingRes?.results || [];
+
+  const catalogs = {};
+  catalogQueries.forEach((q, idx) => {
+    if (q.data && q.data.results) {
+      catalogs[catalogDefinitions[idx].name] = q.data.results;
+    }
+  });
 
   const sliderSettings = {
     dots: false,
