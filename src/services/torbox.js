@@ -148,11 +148,8 @@ export const getStreamUrl = async (magnetLink) => {
     const formData = new FormData();
     formData.append('magnet', magnetLink);
     
-    const addRes = await fetch('https://api.torbox.app/v1/api/torrents/createtorrent', {
+    const addRes = await fetch('/api/torbox/createtorrent', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_TORBOX_API_KEY}`
-      },
       body: formData
     });
     
@@ -168,11 +165,7 @@ export const getStreamUrl = async (magnetLink) => {
     const maxRetries = 30; // 60 seconds
     
     while (retries < maxRetries) {
-      const listRes = await fetch('https://api.torbox.app/v1/api/torrents/mylist', {
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_TORBOX_API_KEY}`
-        }
-      });
+      const listRes = await fetch(`/api/torbox/mylist`);
       const listData = await listRes.json();
       const torrents = listData.data || [];
       torrent = torrents.find(t => t.id === torrentId || t.id === Number(torrentId));
@@ -202,11 +195,7 @@ export const getStreamUrl = async (magnetLink) => {
     const videoFile = validVideoFiles.sort((a,b) => b.size - a.size)[0];
 
     // 3. Request Stream Link
-    const streamRes = await fetch(`https://api.torbox.app/v1/api/torrents/requestdl?torrent_id=${torrentId}&file_id=${videoFile.id}&zip=false&torrent_file=false`, {
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_TORBOX_API_KEY}`
-      }
-    });
+    const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${torrentId}&file_id=${videoFile.id}&zip=false&torrent_file=false`);
     const streamData = await streamRes.json();
     
     if (!streamData.success) {
@@ -231,11 +220,7 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
     const eStr = episodeNum < 10 ? `E0${episodeNum}` : `E${episodeNum}`;
     
     // 1. Fetch user's torrent list to see if they already have the season pack or episode
-    const listRes = await fetch('https://api.torbox.app/v1/api/torrents/mylist', {
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_TORBOX_API_KEY}`
-      }
-    });
+    const listRes = await fetch(`/api/torbox/mylist`);
     const listData = await listRes.json();
     const torrents = listData.data || [];
 
@@ -266,11 +251,7 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
 
     // 2. If found in cache, stream it instantly!
     if (matchedTorrentId && matchedFileId) {
-      const streamRes = await fetch(`https://api.torbox.app/v1/api/torrents/requestdl?torrent_id=${matchedTorrentId}&file_id=${matchedFileId}&zip=false&torrent_file=false`, {
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_TORBOX_API_KEY}`
-        }
-      });
+      const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${matchedTorrentId}&file_id=${matchedFileId}&zip=false&torrent_file=false`);
       const streamData = await streamRes.json();
       if (streamData.success) {
         return {
@@ -303,11 +284,7 @@ export const getMyTorboxList = async () => {
     if (myTorboxListCache && Date.now() - myTorboxListCacheTime < 60000) {
       return myTorboxListCache; // Cache for 60 seconds
     }
-    const res = await fetch('https://api.torbox.app/v1/api/torrents/mylist', {
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_TORBOX_API_KEY}`
-      }
-    });
+    const res = await fetch(`/api/torbox/mylist`);
     const data = await res.json();
     myTorboxListCache = data.data || [];
     myTorboxListCacheTime = Date.now();
@@ -319,11 +296,7 @@ export const getMyTorboxList = async () => {
 };
 
 export const getDirectStreamUrl = async (torrentId, fileId) => {
-  const streamRes = await fetch(`https://api.torbox.app/v1/api/torrents/requestdl?torrent_id=${torrentId}&file_id=${fileId}&zip=false&torrent_file=false`, {
-    headers: {
-      'Authorization': `Bearer ${import.meta.env.VITE_TORBOX_API_KEY}`
-    }
-  });
+  const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${torrentId}&file_id=${fileId}&zip=false&torrent_file=false`);
   const streamData = await streamRes.json();
   if (streamData.success) {
     return streamData.data;
