@@ -3,9 +3,27 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 
 // Use a simple fetch wrapper since React Query handles all caching natively
 const fetchTmdb = async (url) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('API request failed');
-  return await res.json();
+  let retries = 3;
+  let delay = 1000;
+  
+  while (retries > 0) {
+    const res = await fetch(url);
+    
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('Retry-After');
+      const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : delay;
+      console.warn(`TMDB Rate Limit Hit. Retrying in ${waitTime}ms...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      retries -= 1;
+      delay *= 2; // Exponential backoff fallback
+      continue;
+    }
+    
+    if (!res.ok) throw new Error('API request failed');
+    return await res.json();
+  }
+  
+  throw new Error('TMDB API is currently busy. Please try again later.');
 };
 
 export const fetchTrending = async (type = 'movie') => {
