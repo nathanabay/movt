@@ -30,7 +30,7 @@ export const searchMulti = async (query) => {
 };
 
 export const getDetails = async (id, type = 'movie') => {
-  return await fetchWithCache(`${BASE_URL}/${type}/${id}?api_key=${TMDB_API_KEY}&append_to_response=credits,videos,similar,external_ids`);
+  return await fetchWithCache(`${BASE_URL}/${type}/${id}?api_key=${TMDB_API_KEY}&append_to_response=credits,videos,similar,recommendations,external_ids`);
 };
 
 export const fetchProviderContent = async (providerId, type = 'movie') => {
@@ -47,4 +47,19 @@ export const getTvSeasonDetails = async (tvId, seasonNumber) => {
 export const fetchMovieVideos = async (id, type = 'movie') => {
   const data = await fetchWithCache(`${BASE_URL}/${type}/${id}/videos?api_key=${TMDB_API_KEY}`);
   return data.results;
+};
+
+export const getCollectionDetails = async (collectionId) => {
+  return await fetchWithCache(`${BASE_URL}/collection/${collectionId}?api_key=${TMDB_API_KEY}`);
+};
+
+export const getPersonCredits = async (personId) => {
+  return await fetchWithCache(`${BASE_URL}/person/${personId}/combined_credits?api_key=${TMDB_API_KEY}`);
+};
+
+export const fetchGenreContent = async (genreId, type = 'movie') => {
+  const data = await fetchWithCache(`${BASE_URL}/discover/${type}?api_key=${TMDB_API_KEY}&with_genres=${genreId}&sort_by=popularity.desc`);
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.results = copy.results.map(item => ({ ...item, media_type: type }));
+  return copy;
 };

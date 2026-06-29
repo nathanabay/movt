@@ -170,7 +170,7 @@ export const getStreamUrl = async (magnetLink) => {
       const torrents = listData.data || [];
       torrent = torrents.find(t => t.id === torrentId || t.id === Number(torrentId));
       
-      if (torrent && (torrent.download_state === 'cached' || torrent.download_state === 'completed') && torrent.files && torrent.files.length > 0) {
+      if (torrent && (torrent.download_state === 'cached' || torrent.download_state === 'completed' || torrent.download_state === 'downloading') && torrent.files && torrent.files.length > 0) {
         break;
       }
       
@@ -191,7 +191,7 @@ export const getStreamUrl = async (magnetLink) => {
       throw new Error("No playable video files found in this torrent.");
     }
 
-    // Find the largest video file
+    // Find the largest video file to default to
     const videoFile = validVideoFiles.sort((a,b) => b.size - a.size)[0];
 
     // 3. Request Stream Link
@@ -203,7 +203,11 @@ export const getStreamUrl = async (magnetLink) => {
       throw new Error(detailMsg || "Failed to get stream link");
     }
 
-    return streamData.data; // This is the direct stream URL
+    return {
+      url: streamData.data,
+      torrentId: torrentId,
+      files: validVideoFiles
+    };
   } catch (err) {
     console.error("Stream generation error:", err);
     throw err;
@@ -250,7 +254,11 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum) => {
       const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${matchedTorrentId}&file_id=${matchedFileId}&zip=false&torrent_file=false`);
       const streamData = await streamRes.json();
       if (streamData.success) {
-        return streamData.data;
+        return {
+          url: streamData.data,
+          torrentId: matchedTorrentId,
+          files: torrents.find(t => t.id === matchedTorrentId)?.files || []
+        };
       }
     }
 
@@ -285,4 +293,13 @@ export const getMyTorboxList = async () => {
     console.error("Failed to fetch TorBox list:", err);
     return [];
   }
+};
+
+export const getDirectStreamUrl = async (torrentId, fileId) => {
+  const streamRes = await fetch(`/api/torbox/requestdl?torrent_id=${torrentId}&file_id=${fileId}&zip=false&torrent_file=false`);
+  const streamData = await streamRes.json();
+  if (streamData.success) {
+    return streamData.data;
+  }
+  throw new Error("Failed to get direct stream link");
 };

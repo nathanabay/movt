@@ -1,0 +1,74 @@
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  background: #2a2a2a;
+  background-image: linear-gradient(
+    to right,
+    #2a2a2a 0%,
+    #3a3a3a 20%,
+    #2a2a2a 40%,
+    #2a2a2a 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Home Page Skeletons */
+.skeleton-hero {
+  width: 100%;
+  height: 85vh;
+  margin-top: -70px;
+}
+
+.skeleton-row {
+  display: flex;
+  gap: 10px;
+  padding: 0 4rem;
+  margin-top: 3rem;
+  overflow: hidden;
+}
+
+.skeleton-card {
+  width: calc(100vw / 6 - 20px);
+  aspect-ratio: 2/3;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .skeleton-hero { height: 60vh; margin-top: -60px; }
+  .skeleton-row { padding: 0 1rem; gap: 5px; }
+  .skeleton-card { width: calc(100vw / 3 - 10px); }
+}
+
+/* Movie Details Skeletons */
+.skeleton-modal {
+  width: 90%;
+  max-width: 850px;
+  height: 80vh;
+  margin: 30px auto;
+  border-radius: 8px;
+}
+
+.skeleton-title {
+  width: 60%;
+  height: 4rem;
+  margin: 20px 5%;
+  border-radius: 4px;
+}
+
+.skeleton-overview {
+  width: 90%;
+  height: 100px;
+  margin: 20px 5%;
+  border-radius: 4px;
+}

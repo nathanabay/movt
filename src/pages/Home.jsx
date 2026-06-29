@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { fetchTrending, fetchProviderContent } from '../services/tmdb';
+import { fetchTrending, fetchGenreContent } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
 import './Home.css';
+import '../components/Skeleton.css';
 import { Play, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
@@ -10,15 +11,6 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 const SlickSlider = Slider.default || Slider;
-
-const PROVIDERS = [
-  { name: 'Netflix', id: 8 },
-  { name: 'Prime Video', id: 119 },
-  { name: 'Disney+', id: 337 },
-  { name: 'Apple TV+', id: 350 },
-  { name: 'Max', id: 384 },
-  { name: 'Hulu', id: 15 }
-];
 
 const NextArrow = ({ onClick }) => (
   <button className="slick-arrow slick-next-custom" onClick={onClick}>
@@ -49,40 +41,17 @@ const Home = () => {
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
-        const trendingPromise = fetchTrending('movie');
-        
-        const catalogPromises = PROVIDERS.flatMap(provider => [
-          fetchProviderContent(provider.id, 'movie').then(data => ({
-            name: `${provider.name} Movies`,
-            data: data.results
-          })).catch(err => {
-            console.error(`Failed to fetch ${provider.name} Movies`, err);
-            return null;
-          }),
-          fetchProviderContent(provider.id, 'tv').then(data => ({
-            name: `${provider.name} TV Shows`,
-            data: data.results
-          })).catch(err => {
-            console.error(`Failed to fetch ${provider.name} TV Shows`, err);
-            return null;
-          })
-        ]);
-
-        const [trendingData, ...catalogsResults] = await Promise.all([
-          trendingPromise,
-          ...catalogPromises
+        const [trendingData, actionData, comedyData] = await Promise.all([
+          fetchTrending('movie'),
+          fetchGenreContent(28, 'movie'),
+          fetchGenreContent(35, 'movie')
         ]);
 
         setTrending(trendingData.results);
-
-        const catalogsData = {};
-        for (const result of catalogsResults) {
-          if (result && result.data && result.data.length > 0) {
-            catalogsData[result.name] = result.data;
-          }
-        }
-        
-        setCatalogs(catalogsData);
+        setCatalogs({
+          'Top Rated Action': actionData.results,
+          'Top Rated Comedies': comedyData.results
+        });
       } catch (err) {
         setError(err.message);
       } finally {
@@ -124,7 +93,17 @@ const Home = () => {
     }
   };
 
-  if (loading) return <div className="page-loader"><div className="spinner"></div></div>;
+  if (loading) return (
+    <div className="home-page fade-in">
+      <div className="skeleton skeleton-hero"></div>
+      <div className="skeleton-row">
+        {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton skeleton-card"></div>)}
+      </div>
+      <div className="skeleton-row">
+        {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton skeleton-card"></div>)}
+      </div>
+    </div>
+  );
   if (error) return <div className="error-message">{error}</div>;
 
   const featuredMovie = trending[0];

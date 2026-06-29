@@ -6,6 +6,7 @@ import { getDetails, getTvSeasonDetails } from '../services/tmdb';
 import { searchTorbox } from '../services/torbox';
 import { fetchSubtitles } from '../services/subtitles';
 import './MovieDetails.css';
+import '../components/Skeleton.css';
 
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
 
@@ -16,6 +17,7 @@ const MovieDetails = ({ type }) => {
   const { saveProgress, getProgress } = useWatchHistory();
   const inList = isInWatchlist(Number(id));
   const [movie, setMovie] = useState(null);
+  const [themeColor, setThemeColor] = useState('#181818');
   const [torrents, setTorrents] = useState([]);
   const [loadingTorrents, setLoadingTorrents] = useState(false);
   const [downloadedMagnets, setDownloadedMagnets] = useState(new Set());
@@ -29,6 +31,10 @@ const MovieDetails = ({ type }) => {
   const [streamUrl, setStreamUrl] = useState(null);
   const [subtitleUrl, setSubtitleUrl] = useState(null);
   const [streamLoading, setStreamLoading] = useState(false);
+  const [activeStreamInfo, setActiveStreamInfo] = useState(null);
+  const [precachedNext, setPrecachedNext] = useState(false);
+  const [downloadStats, setDownloadStats] = useState(null);
+  const [showResolutions, setShowResolutions] = useState(false);
   const playerRef = useRef(null);
   
   // Binge Mode State
@@ -41,6 +47,11 @@ const MovieDetails = ({ type }) => {
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [seasonData, setSeasonData] = useState(null);
   const [loadingSeason, setLoadingSeason] = useState(false);
+
+  // Cluster 1 Features State
+  const [collectionData, setCollectionData] = useState(null);
+  const [selectedActor, setSelectedActor] = useState(null);
+  const [actorCredits, setActorCredits] = useState([]);
 
   // Skip Intro State
   const [introData, setIntroData] = useState(null);
@@ -59,6 +70,26 @@ const MovieDetails = ({ type }) => {
           const searchName = type === 'tv' ? (data.title || data.name).trim() : `${data.title || data.name} ${year}`.trim();
           fetchTorrents(imdbId, searchName);
           setCurrentSearchTitle(type === 'tv' ? 'Global TorBox Streams (Whole Show)' : 'Streams');
+        }
+
+        const backdropUrl = data.backdrop_path ? `https://image.tmdb.org/t/p/w780${data.backdrop_path}` : null;
+        if (backdropUrl) {
+          import('../utils/colorExtractor').then(m => {
+            m.extractDominantColor(backdropUrl).then(color => setThemeColor(color));
+          });
+        }
+
+        // Fetch Collection if exists
+        if (data.belongs_to_collection) {
+          import('../services/tmdb').then(m => {
+            m.getCollectionDetails(data.belongs_to_collection.id).then(cData => {
+              if (cData && cData.parts) {
+                // Sort chronologically
+                cData.parts.sort((a,b) => new Date(a.release_date) - new Date(b.release_date));
+              }
+              setCollectionData(cData);
+            }).catch(console.error);
+          });
         }
       } catch (err) {
         setError(err.message);
@@ -126,6 +157,30 @@ const MovieDetails = ({ type }) => {
     fetchMyTorboxList();
   }, []);
 
+  // Live Stats Polling
+  useEffect(() => {
+    let interval;
+    if (activeStreamInfo && activeStreamInfo.torrentId) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/torbox/mylist`);
+          const d = await res.json();
+          const t = (d.data || []).find(x => x.id === activeStreamInfo.torrentId);
+          if (t && t.download_state === 'downloading') {
+            setDownloadStats({
+              speed: t.download_speed || 0,
+              progress: t.progress || 0,
+              seeders: t.seeds || 0
+            });
+          } else {
+            setDownloadStats(null);
+          }
+        } catch (e) {}
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [activeStreamInfo]);
+
   const handleDownload = async (magnet) => {
     try {
       alert('Adding torrent to TorBox...');
@@ -165,12 +220,13 @@ const MovieDetails = ({ type }) => {
       }
 
       const { getStreamUrl } = await import('../services/torbox');
-      const url = await getStreamUrl(targetMagnet);
+      const data = await getStreamUrl(targetMagnet);
       
+      setActiveStreamInfo(data);
       const subUrl = await fetchSubtitles(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), 'movie');
       setSubtitleUrl(subUrl);
       
-      setStreamUrl(url);
+      setStreamUrl(data.url);
     } catch (err) {
       alert('Failed to stream movie: ' + err.message);
     } finally {
@@ -185,15 +241,17 @@ const MovieDetails = ({ type }) => {
       setStreamLoading(true);
       const showName = movie.title || movie.name;
       const { getEpisodeStreamUrl } = await import('../services/torbox');
-      const url = await getEpisodeStreamUrl(showName, seasonNum, episodeNum);
+      const data = await getEpisodeStreamUrl(showName, seasonNum, episodeNum);
       setPlayingTvContext({ season: seasonNum, episode: episodeNum });
       // Mock intro fetch
       setIntroData({ start: 5, end: 85 });
+      setPrecachedNext(false);
+      setActiveStreamInfo(data);
       
       const subUrl = await fetchSubtitles(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), 'tv', seasonNum, episodeNum);
       setSubtitleUrl(subUrl);
       
-      setStreamUrl(url);
+      setStreamUrl(data.url);
     } catch (err) {
       alert('Failed to stream episode: ' + err.message);
       setAutoplayCountdown(null);
@@ -264,7 +322,44 @@ const MovieDetails = ({ type }) => {
     subtitleUrl: subtitleUrl
   }), [streamUrl, subtitleUrl]);
 
-  if (loading) return <div className="page-loader"><div className="spinner"></div></div>;
+  const handleActorClick = async (actor) => {
+    if (selectedActor === actor.id) {
+      setSelectedActor(null);
+      setActorCredits([]);
+      return;
+    }
+    setSelectedActor(actor.id);
+    try {
+      const { getPersonCredits } = await import('../services/tmdb');
+      const data = await getPersonCredits(actor.id);
+      const validCredits = data.cast
+        .filter(c => (c.release_date || c.first_air_date) && new Date(c.release_date || c.first_air_date) <= new Date())
+        .sort((a, b) => b.popularity - a.popularity);
+      setActorCredits(validCredits);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const getCachedBadge = (titleStr) => {
+    if (!torboxList || torboxList.length === 0 || !titleStr) return false;
+    const nameRegex = new RegExp(titleStr.replace(/[^a-zA-Z0-9]/g, '.*'), 'i');
+    for (const t of torboxList) {
+      if (nameRegex.test(t.name) || (t.files && t.files.length > 0 && nameRegex.test(t.files[0].name))) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (loading) return (
+    <div className="movie-details-modal-wrapper fade-in">
+      <div className="skeleton-modal skeleton" style={{backgroundColor: '#181818'}}>
+        <div className="skeleton-title skeleton" style={{background: '#333'}}></div>
+        <div className="skeleton-overview skeleton" style={{background: '#333'}}></div>
+      </div>
+    </div>
+  );
   if (error) return <div className="error-message">{error}</div>;
   if (!movie) return <div className="error-message">Movie not found.</div>;
 
@@ -301,6 +396,19 @@ const MovieDetails = ({ type }) => {
           setShowSkipIntro(false);
         }
       }
+
+      // Feature: Background Episode Pre-Caching (Zero Buffering)
+      if (type === 'tv' && playingTvContext && !precachedNext) {
+        const dur = player.duration();
+        if (!isNaN(dur) && ct > 0 && dur - ct <= 300) {
+          setPrecachedNext(true);
+          const showName = movie.title || movie.name;
+          import('../services/torbox').then(m => {
+            m.getEpisodeStreamUrl(showName, playingTvContext.season, playingTvContext.episode + 1)
+              .catch(() => {}); // silently fail if no next ep
+          });
+        }
+      }
     });
 
     player.on('ended', () => {
@@ -333,14 +441,75 @@ const MovieDetails = ({ type }) => {
               {movie.title || movie.name} {playingTvContext ? `(S${playingTvContext.season} E${playingTvContext.episode})` : ''}
             </div>
 
+            <div className="player-top-right-controls" onClick={(e) => e.stopPropagation()} style={{display:'flex', gap:'10px', alignItems:'center'}}>
+              
+              {downloadStats && (
+                <div className="live-stats-badge" style={{display:'flex', gap:'10px', background:'rgba(0,0,0,0.6)', padding:'5px 10px', borderRadius:'4px', border:'1px solid rgba(255,255,255,0.2)', fontSize:'0.9rem', color:'#46d369'}}>
+                  <span>⬇ {(downloadStats.speed / 1024 / 1024).toFixed(1)} MB/s</span>
+                  <span>{Math.round(downloadStats.progress * 100)}%</span>
+                  <span>S: {downloadStats.seeders}</span>
+                </div>
+              )}
+
+              {activeStreamInfo && activeStreamInfo.files && activeStreamInfo.files.length > 1 && (
+                <div style={{position: 'relative'}}>
+                  <button className="btn-player-episodes" onClick={() => setShowResolutions(!showResolutions)}>
+                    ⚙ Quality
+                  </button>
+                  {showResolutions && (
+                    <div className="episodes-dropdown-menu fade-in" style={{width: '200px'}}>
+                      <div className="episodes-dropdown-list">
+                        {activeStreamInfo.files.map(f => {
+                          const resMatch = f.name.match(/(4K|2160p|1080p|720p|480p)/i);
+                          const label = resMatch ? resMatch[0] : f.name.substring(0, 20) + '...';
+                          return (
+                            <div key={f.id} className="episode-dropdown-item" onClick={async () => {
+                              setShowResolutions(false);
+                              const { getDirectStreamUrl } = await import('../services/torbox');
+                              try {
+                                const url = await getDirectStreamUrl(activeStreamInfo.torrentId, f.id);
+                                if (playerRef.current) {
+                                  const p = playerRef.current;
+                                  const currentTime = p.currentTime();
+                                  setStreamUrl(url);
+                                  setTimeout(() => p.currentTime(currentTime), 500);
+                                }
+                              } catch(e) { alert("Failed to switch quality"); }
+                            }}>
+                              <span className="ep-name">{label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button 
+                className="btn-player-episodes" 
+                onClick={() => {
+                  const videoElement = document.querySelector('.video-js video');
+                  if (videoElement && document.pictureInPictureEnabled) {
+                    if (document.pictureInPictureElement) {
+                      document.exitPictureInPicture();
+                    } else {
+                      videoElement.requestPictureInPicture();
+                    }
+                  }
+                }}
+              >
+                🪟 PiP
+              </button>
+
             {type === 'tv' && playingTvContext && seasonData && (
-              <div className="player-top-right-controls" onClick={(e) => e.stopPropagation()}>
-                <button 
-                  className="btn-player-episodes"
-                  onClick={() => setShowEpisodesDropdown(!showEpisodesDropdown)}
-                >
-                  <List size={20} /> Episodes
-                </button>
+                <>
+                  <button 
+                    className="btn-player-episodes"
+                    onClick={() => setShowEpisodesDropdown(!showEpisodesDropdown)}
+                  >
+                    <List size={20} /> Episodes
+                  </button>
                 
                 {showEpisodesDropdown && (
                   <div className="episodes-dropdown-menu fade-in">
@@ -399,6 +568,31 @@ const MovieDetails = ({ type }) => {
               </div>
             )}
 
+            {!isPlayerIdle && (
+              <div className="next-up-matrix fade-in">
+                <h4>Next Up / Recommended</h4>
+                <div className="next-up-scroll">
+                  {(movie.recommendations?.results || movie.similar?.results || []).slice(0, 5).map(rec => {
+                    const isCached = getCachedBadge(rec.title || rec.name);
+                    return (
+                      <div key={rec.id} className="next-up-card" onClick={(e) => {
+                        e.stopPropagation();
+                        setStreamUrl(null);
+                        navigate(`/${rec.media_type || type}/${rec.id}`);
+                        window.scrollTo(0, 0);
+                      }}>
+                        <img src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path}`} alt={rec.title || rec.name} />
+                        <div className="next-up-info">
+                          <span>{rec.title || rec.name}</span>
+                          {isCached && <span className="badge-instant-play">⚡ Instant</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {type === 'tv' && showSkipIntro && autoplayCountdown === null && (
             <button 
               className="btn-skip-intro fade-in"
@@ -425,13 +619,13 @@ const MovieDetails = ({ type }) => {
 
   return (
     <div className="movie-details-modal-wrapper fade-in">
-      <div className="movie-details-modal">
-        <button className="modal-close-btn" onClick={() => navigate(-1)}>
+      <div className="movie-details-modal" style={{ backgroundColor: themeColor }}>
+        <button className="modal-close-btn" onClick={() => navigate(-1)} style={{ backgroundColor: themeColor }}>
           <X size={24} />
         </button>
         
         <div className="modal-hero" style={{ backgroundImage: `url(${backdropUrl})` }}>
-          <div className="modal-hero-gradient"></div>
+          <div className="modal-hero-gradient" style={{ background: `linear-gradient(to top, ${themeColor} 0%, transparent 100%)` }}></div>
           <div className="modal-hero-content">
             <h1 className="modal-title">{movie.title || movie.name}</h1>
             <div className="modal-buttons">
@@ -600,7 +794,7 @@ const MovieDetails = ({ type }) => {
             )}
             
             {torrents.map((t, idx) => (
-              <div key={idx} className="torrent-item-netflix">
+              <div key={idx} className="torrent-item-netflix" style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderBottomColor: 'rgba(255,255,255,0.05)' }}>
                 <div className="torrent-index">{idx + 1}</div>
                 <div className="torrent-info-netflix">
                   <h4 className="torrent-name-netflix">
@@ -624,6 +818,97 @@ const MovieDetails = ({ type }) => {
             ))}
           </div>
         </div>
+
+        {/* Cast Spotlight */}
+        {movie.credits && movie.credits.cast && movie.credits.cast.length > 0 && (
+          <div className="cast-section">
+            <h3 className="section-header">Cast Spotlight</h3>
+            <div className="cast-scroll">
+              {movie.credits.cast.slice(0, 10).map(actor => (
+                <div 
+                  key={actor.id} 
+                  className={`cast-card ${selectedActor === actor.id ? 'active' : ''}`}
+                  onClick={() => handleActorClick(actor)}
+                >
+                  <img 
+                    src={actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : 'https://via.placeholder.com/185x278?text=No+Image'} 
+                    alt={actor.name} 
+                    className="cast-photo"
+                  />
+                  <p className="cast-name">{actor.name}</p>
+                  <p className="cast-character">{actor.character}</p>
+                </div>
+              ))}
+            </div>
+            
+            {selectedActor && actorCredits.length > 0 && (
+              <div className="actor-filmography fade-in">
+                <h4>More from {movie.credits.cast.find(a => a.id === selectedActor)?.name}</h4>
+                <div className="similar-grid">
+                  {actorCredits.slice(0, 6).map(credit => (
+                    <div key={credit.credit_id || credit.id} className="similar-card" onClick={() => {
+                      navigate(`/${credit.media_type || 'movie'}/${credit.id}`);
+                      window.scrollTo(0, 0);
+                    }}>
+                      <div className="similar-poster">
+                        <img 
+                          src={`https://image.tmdb.org/t/p/w500${credit.backdrop_path || credit.poster_path}`} 
+                          alt={credit.title || credit.name} 
+                        />
+                      </div>
+                      <div className="similar-info">
+                        <div className="similar-meta-top">
+                          <span className="match-score">{(credit.vote_average * 10).toFixed(0)}% Match</span>
+                        </div>
+                        <p className="similar-title">{credit.title || credit.name}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Smart Collections Hub */}
+        {collectionData && collectionData.parts && collectionData.parts.length > 0 && (
+          <div className="collection-section">
+            <h3 className="section-header">{collectionData.name}</h3>
+            <p className="collection-overview">{collectionData.overview}</p>
+            <div className="similar-grid">
+              {collectionData.parts.map(part => (
+                <div key={part.id} className="similar-card" onClick={() => {
+                  navigate(`/movie/${part.id}`);
+                  window.scrollTo(0, 0);
+                }}>
+                  <div className="similar-poster">
+                    <img 
+                      src={`https://image.tmdb.org/t/p/w500${part.backdrop_path || part.poster_path}`} 
+                      alt={part.title} 
+                    />
+                    <div className="similar-play-icon">
+                      <Play fill="white" size={24} />
+                    </div>
+                  </div>
+                  <div className="similar-info">
+                    <div className="similar-meta-top">
+                      <span className="match-score">{(part.vote_average * 10).toFixed(0)}% Match</span>
+                      <div className="similar-badge">
+                        {part.release_date?.substring(0,4)}
+                      </div>
+                    </div>
+                    <p className="similar-title" style={{fontWeight: 'bold', margin: '0 0 0.5rem 0'}}>{part.title}</p>
+                    <p className="similar-overview">
+                      {part.overview 
+                        ? (part.overview.length > 80 ? part.overview.substring(0, 80) + '...' : part.overview) 
+                        : 'No description available.'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {movie.similar && movie.similar.results && movie.similar.results.length > 0 && (
           <div className="similar-section">
