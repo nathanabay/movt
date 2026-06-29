@@ -8,6 +8,7 @@ export function parseEpisodeFile(filename) {
     if (!videoExts.some(ext => lower.endsWith(ext))) return null;
 
     let match = filename.match(/[sS](\d{1,2})[eE](\d{1,2})/i);
+    if (!match) match = filename.match(/[sS](\d{1,2})\s?[-\.]?\s?[eE](\d{1,2})/i);
     if (!match) match = filename.match(/(\d{1,2})x(\d{1,2})/i);
     if (!match) match = filename.match(/[sS]eason\s?(\d{1,2})\s?[eE]pisode\s?(\d{1,2})/i);
 
@@ -28,8 +29,8 @@ export function buildLibraryMap(torboxList) {
     for (const torrent of torboxList) {
         if (!torrent.files) continue;
         
-        let showKey = (torrent.name || '').split(/[sS]\d{1,2}[eE]\d{1,2}|\d{1,2}x\d{1,2}|[sS]eason\s?\d{1,2}/i)[0];
-        showKey = showKey.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        let showKey = (torrent.name || '').split(/[sS]\d{1,2}\s?[-\.]?\s?[eE]\d{1,2}|\d{1,2}x\d{1,2}|[sS]eason\s?\d{1,2}/i)[0];
+        showKey = showKey.replace(/[\._]/g, ' ').replace(/[^a-zA-Z0-9\s]/g, '').trim().toLowerCase();
 
         for (const file of torrent.files) {
             const parsed = parseEpisodeFile(file.name);

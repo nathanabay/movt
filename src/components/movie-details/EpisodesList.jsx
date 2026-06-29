@@ -42,9 +42,10 @@ const EpisodesList = ({
         <div className="episodes-list">
           {seasonData.episodes.map((episode) => {
             
-            // Fast O(1) check
-            const showKey = (movie.title || movie.name || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            const isDownloaded = !!mappedLibrary?.[showKey]?.[selectedSeason]?.[episode.episode_number];
+            // Fast O(1) check with partial matching
+            const cleanShowName = (movie.title || movie.name || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
+            const matchedShowKey = mappedLibrary ? Object.keys(mappedLibrary).find(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : null;
+            const isDownloaded = !!(matchedShowKey && mappedLibrary[matchedShowKey]?.[selectedSeason]?.[episode.episode_number]);
 
             return (
               <div 

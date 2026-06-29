@@ -314,10 +314,11 @@ export const getEpisodeStreamUrl = async (showName, seasonNum, episodeNum, signa
     const { buildLibraryMap } = await import('./mapper.js');
     const libraryMap = buildLibraryMap(torrents);
     
-    const showKey = (showName || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const cleanShowName = (showName || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
 
     // 3. O(1) Lookup
-    const matched = libraryMap[showKey]?.[seasonNum]?.[episodeNum];
+    let matchedShowKey = Object.keys(libraryMap).find(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName));
+    const matched = matchedShowKey ? libraryMap[matchedShowKey]?.[seasonNum]?.[episodeNum] : null;
 
     // 4. If found, stream it
     if (matched) {

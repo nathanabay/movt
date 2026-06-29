@@ -1,9 +1,37 @@
 import React, { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import { Play, Pause, ExternalLink } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './VideoPlayer.css';
+
+// Register VLC Button natively in video.js
+const Button = videojs.getComponent('Button');
+class VlcButton extends Button {
+  constructor(player, options) {
+    super(player, options);
+    this.controlText('No Audio? Play in VLC');
+  }
+  buildCSSClass() {
+    return `vjs-vlc-btn ${super.buildCSSClass()}`;
+  }
+  createEl() {
+    const el = super.createEl();
+    el.innerHTML = `<span class="vjs-icon-placeholder" style="font-size: 1.1rem; font-weight: 600; font-family: inherit; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">VLC</span>`;
+    return el;
+  }
+  handleClick() {
+    const src = this.player().currentSrc();
+    if (src) {
+      navigator.clipboard.writeText(src)
+        .then(() => toast.success("Stream link copied! Open VLC -> File -> Open Network..."))
+        .catch(() => toast.error("Failed to copy link"));
+    }
+  }
+}
+if (!videojs.getComponent('VlcButton')) {
+  videojs.registerComponent('VlcButton', VlcButton);
+}
 
 export const VideoPlayer = React.memo(({ options, onReady }) => {
   const videoRef = useRef(null);
@@ -33,6 +61,13 @@ export const VideoPlayer = React.memo(({ options, onReady }) => {
         onReady && onReady(player);
       });
 
+      // Add VLC button to control bar before the fullscreen toggle
+      const controlBar = player.getChild('controlBar');
+      if (controlBar) {
+        const length = controlBar.children().length;
+        controlBar.addChild('VlcButton', {}, length - 1);
+      }
+
       player.on('play', () => triggerRipple('play'));
       player.on('pause', () => triggerRipple('pause'));
     } else {
@@ -60,28 +95,10 @@ export const VideoPlayer = React.memo(({ options, onReady }) => {
     };
   }, []);
 
-  const handleCopyStream = (e) => {
-    e.stopPropagation();
-    if (options.sources && options.sources.length > 0) {
-      navigator.clipboard.writeText(options.sources[0].src)
-        .then(() => toast.success("Stream link copied! Open VLC -> File -> Open Network..."))
-        .catch(() => toast.error("Failed to copy link"));
-    }
-  };
-
   return (
     <div data-vjs-player style={{ width: '100%', height: '100%', position: 'relative' }}>
       <div ref={videoRef} style={{ width: '100%', height: '100%' }} />
       
-      <button 
-        onClick={handleCopyStream}
-        className="vlc-fallback-btn"
-        title="If audio is not playing (AC3/EAC3 codec issue), click to copy link and play in VLC"
-      >
-        <ExternalLink size={16} style={{ marginRight: '6px' }} />
-        No Audio? Play in VLC
-      </button>
-
       {/* Ripple Animation Overlay */}
       {ripple && (
         <div className="player-ripple-overlay">
