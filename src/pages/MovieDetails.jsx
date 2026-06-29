@@ -198,6 +198,14 @@ const MovieDetails = ({ type }) => {
     }
   };
 
+  const isMagnetDownloaded = (magnet) => {
+    if (downloadedMagnets.has(magnet)) return true;
+    const match = magnet.match(/urn:btih:([^&]+)/i);
+    if (!match) return false;
+    const hash = match[1].toLowerCase();
+    return torboxList.some(t => t.hash && t.hash.toLowerCase() === hash);
+  };
+
   const handleWatchMovie = async () => {
     try {
       setStreamLoading(true);
@@ -809,11 +817,12 @@ const MovieDetails = ({ type }) => {
                 </div>
                 <button 
                   className="btn-download-netflix" 
-                  disabled={downloadedMagnets.has(t.magnet)}
-                  style={{ opacity: downloadedMagnets.has(t.magnet) ? 0.5 : 1, cursor: downloadedMagnets.has(t.magnet) ? 'default' : 'pointer' }}
+                  disabled={isMagnetDownloaded(t.magnet)}
+                  style={{ opacity: isMagnetDownloaded(t.magnet) ? 0.5 : 1, cursor: isMagnetDownloaded(t.magnet) ? 'default' : 'pointer' }}
                   onClick={() => handleDownload(t.magnet)}
+                  title={isMagnetDownloaded(t.magnet) ? "Already in TorBox Downloads" : "Download to TorBox"}
                 >
-                  {downloadedMagnets.has(t.magnet) ? <Check size={20} color="#46d369" /> : <Download size={20} />}
+                  {isMagnetDownloaded(t.magnet) ? <Check size={20} color="#46d369" /> : <Download size={20} />}
                 </button>
               </div>
             ))}
