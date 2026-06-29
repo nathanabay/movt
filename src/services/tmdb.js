@@ -1,17 +1,29 @@
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || 'ad135a8e5c5b0915dd7a498e5416ca26'; 
 const BASE_URL = 'https://api.themoviedb.org/3';
 
-// In-memory cache for very fast repeated loads
+// In-memory cache for very fast repeated loads with TTL and Size Limit
 const cache = new Map();
+const MAX_CACHE_SIZE = 100;
+const CACHE_TTL = 1000 * 60 * 10; // 10 minutes
 
 const fetchWithCache = async (url) => {
   if (cache.has(url)) {
-    return cache.get(url);
+    const cached = cache.get(url);
+    if (Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data;
+    }
+    cache.delete(url); // Expired
   }
   const res = await fetch(url);
   if (!res.ok) throw new Error('API request failed');
   const data = await res.json();
-  cache.set(url, data);
+  
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    cache.delete(oldestKey);
+  }
+  
+  cache.set(url, { data, timestamp: Date.now() });
   return data;
 };
 

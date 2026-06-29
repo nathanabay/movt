@@ -27,5 +27,18 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/yts/, '')
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('video.js')) return 'video';
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor';
+            return 'ui';
+          }
+        }
+      }
+    }
   }
 })

@@ -1,10 +1,16 @@
 
 const searchCache = new Map();
+const MAX_CACHE_SIZE = 50;
+const CACHE_TTL = 1000 * 60 * 15; // 15 mins
 
 export const searchTorbox = async (imdbId, title) => {
   const cacheKey = `${imdbId}-${title}`;
   if (searchCache.has(cacheKey)) {
-    return JSON.parse(JSON.stringify(searchCache.get(cacheKey)));
+    const cached = searchCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < CACHE_TTL) {
+      return JSON.parse(JSON.stringify(cached.data));
+    }
+    searchCache.delete(cacheKey);
   }
 
   let allTorrents = [];
@@ -116,7 +122,14 @@ export const searchTorbox = async (imdbId, title) => {
     }
   }
 
-  searchCache.set(cacheKey, allTorrents);
+  if (allTorrents.length > 0) {
+    if (searchCache.size >= MAX_CACHE_SIZE) {
+      const oldestKey = searchCache.keys().next().value;
+      searchCache.delete(oldestKey);
+    }
+    searchCache.set(cacheKey, { data: allTorrents, timestamp: Date.now() });
+  }
+  
   return JSON.parse(JSON.stringify(allTorrents));
 };
 
@@ -294,13 +307,15 @@ export const getMyTorboxList = async () => {
       return myTorboxListCache; // Cache for 60 seconds
     }
     const res = await fetch(`/api/torbox/mylist`);
+    if (!res.ok) throw new Error(await res.text());
+    
     const data = await res.json();
     myTorboxListCache = data.data || [];
     myTorboxListCacheTime = Date.now();
     return myTorboxListCache;
   } catch (err) {
     console.error("Failed to fetch TorBox list:", err);
-    return [];
+    throw new Error("Failed to load your TorBox torrents. Please check your API key or TorBox server status.");
   }
 };
 

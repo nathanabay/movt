@@ -3,13 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
 import { Play, Download, X, Plus, ArrowLeft, Check, List } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getDetails, getTvSeasonDetails } from '../services/tmdb';
-import { searchTorbox } from '../services/torbox';
-import { fetchSubtitles } from '../services/subtitles';
 import './MovieDetails.css';
 import '../components/Skeleton.css';
 
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
+import { useMovieDetails } from '../hooks/useMovieDetails';
+import { useTorboxStream } from '../hooks/useTorboxStream';
 
 const MovieDetails = ({ type }) => {
   const { id } = useParams();
@@ -17,170 +16,31 @@ const MovieDetails = ({ type }) => {
   const { watchlist, toggleWatchlist, isInWatchlist } = useWatchlist();
   const { saveProgress, getProgress } = useWatchHistory();
   const inList = isInWatchlist(Number(id));
-  const [movie, setMovie] = useState(null);
-  const [themeColor, setThemeColor] = useState('#181818');
-  const [torrents, setTorrents] = useState([]);
-  const [loadingTorrents, setLoadingTorrents] = useState(false);
-  const [downloadedMagnets, setDownloadedMagnets] = useState(new Set());
-  const [currentSearchTitle, setCurrentSearchTitle] = useState('');
-  
-  const [torboxList, setTorboxList] = useState([]);
 
+  const {
+    movie, loading, error, themeColor, 
+    torrents, loadingTorrents, currentSearchTitle, fetchTorrents,
+    torboxList, fetchMyTorboxList, downloadedMagnets, setDownloadedMagnets,
+    selectedSeason, setSelectedSeason, seasonData, loadingSeason,
+    collectionData, selectedActor, actorCredits, handleActorClick,
+    introData
+  } = useMovieDetails(id, type);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [streamUrl, setStreamUrl] = useState(null);
-  const [subtitleUrl, setSubtitleUrl] = useState(null);
-  const [streamLoading, setStreamLoading] = useState(false);
-  const [activeStreamInfo, setActiveStreamInfo] = useState(null);
-  const [precachedNext, setPrecachedNext] = useState(false);
-  const [downloadStats, setDownloadStats] = useState(null);
+  const {
+    streamUrl, setStreamUrl, subtitleUrl, streamLoading, activeStreamInfo,
+    downloadStats, playingTvContext, autoplayCountdown, setAutoplayCountdown,
+    handleWatchMovie, handleWatchEpisode, startAutoplayCountdown,
+    precachedNext, setPrecachedNext, countdownTimerRef, precacheNextEpisode
+  } = useTorboxStream(movie, type);
+
   const [showResolutions, setShowResolutions] = useState(false);
   const playerRef = useRef(null);
   
   // Binge Mode State
-  const [playingTvContext, setPlayingTvContext] = useState(null);
-  const [autoplayCountdown, setAutoplayCountdown] = useState(null);
   const [showEpisodesDropdown, setShowEpisodesDropdown] = useState(false);
-  const countdownTimerRef = useRef(null);
   
-  // TV Show specific state
-  const [selectedSeason, setSelectedSeason] = useState(1);
-  const [seasonData, setSeasonData] = useState(null);
-  const [loadingSeason, setLoadingSeason] = useState(false);
-
-  // Cluster 1 Features State
-  const [collectionData, setCollectionData] = useState(null);
-  const [selectedActor, setSelectedActor] = useState(null);
-  const [actorCredits, setActorCredits] = useState([]);
-
   // Skip Intro State
-  const [introData, setIntroData] = useState(null);
   const [showSkipIntro, setShowSkipIntro] = useState(false);
-
-  useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        setLoading(true);
-        const data = await getDetails(id, type);
-        setMovie(data);
-        
-        const imdbId = data.imdb_id || (data.external_ids && data.external_ids.imdb_id);
-        if (data && imdbId) {
-          const year = data.release_date ? data.release_date.substring(0, 4) : '';
-          const searchName = type === 'tv' ? (data.title || data.name).trim() : `${data.title || data.name} ${year}`.trim();
-          fetchTorrents(imdbId, searchName);
-          setCurrentSearchTitle(type === 'tv' ? 'Global TorBox Streams (Whole Show)' : 'Streams');
-        }
-
-        const backdropUrl = data.backdrop_path ? `https://image.tmdb.org/t/p/w780${data.backdrop_path}` : null;
-        if (backdropUrl) {
-          import('../utils/colorExtractor').then(m => {
-            m.extractDominantColor(backdropUrl).then(color => setThemeColor(color));
-          });
-        }
-
-        // Fetch Collection if exists
-        if (data.belongs_to_collection) {
-          import('../services/tmdb').then(m => {
-            m.getCollectionDetails(data.belongs_to_collection.id).then(cData => {
-              if (cData && cData.parts) {
-                // Sort chronologically
-                cData.parts.sort((a,b) => new Date(a.release_date) - new Date(b.release_date));
-              }
-              setCollectionData(cData);
-            }).catch(console.error);
-          });
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchDetails();
-  }, [id, type]);
-
-  useEffect(() => {
-    if (type === 'tv' && movie) {
-      const fetchSeason = async () => {
-        try {
-          setLoadingSeason(true);
-          const data = await getTvSeasonDetails(id, selectedSeason);
-          setSeasonData(data);
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoadingSeason(false);
-        }
-      };
-      fetchSeason();
-    }
-  }, [selectedSeason, type, id, movie]);
-
-  const fetchTorrents = async (imdbId, title, customQuery = null) => {
-    try {
-      setLoadingTorrents(true);
-      const rawQuery = customQuery || title;
-      const queryToUse = rawQuery.replace(/[:']/g, '').replace(/[^a-zA-Z0-9\s-]/g, ' ').replace(/\s+/g, ' ').trim();
-      // If we're using a custom query (like "Show S01"), don't pass imdbId to force APIBay search
-      const idToUse = customQuery ? null : imdbId;
-      const data = await searchTorbox(idToUse, queryToUse);
-      if (data) {
-        setTorrents(data);
-      } else {
-        setTorrents([]);
-      }
-      
-      if (customQuery) {
-        setCurrentSearchTitle(`Streams for "${customQuery}"`);
-      }
-    } catch (err) {
-      console.error('Failed to fetch TorBox torrents:', err);
-      setTorrents([]);
-    } finally {
-      setLoadingTorrents(false);
-    }
-  };
-
-  const fetchMyTorboxList = async () => {
-    try {
-      const { getMyTorboxList } = await import('../services/torbox');
-      const list = await getMyTorboxList();
-      setTorboxList(list);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    fetchMyTorboxList();
-  }, []);
-
-  // Live Stats Polling
-  useEffect(() => {
-    let interval;
-    if (activeStreamInfo && activeStreamInfo.torrentId) {
-      interval = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/torbox/mylist`);
-          const d = await res.json();
-          const t = (d.data || []).find(x => x.id === activeStreamInfo.torrentId);
-          if (t && t.download_state === 'downloading') {
-            setDownloadStats({
-              speed: t.download_speed || 0,
-              progress: t.progress || 0,
-              seeders: t.seeds || 0
-            });
-          } else {
-            setDownloadStats(null);
-          }
-        } catch (e) {}
-      }, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [activeStreamInfo]);
 
   const handleDownload = async (magnet) => {
     try {
@@ -192,7 +52,6 @@ const MovieDetails = ({ type }) => {
         next.add(magnet);
         return next;
       });
-      // Refresh torbox list so episodes reflect the download instantly
       setTimeout(() => fetchMyTorboxList(), 1500);
     } catch (err) {
       toast.error('Error adding torrent: ' + err.message);
@@ -205,93 +64,6 @@ const MovieDetails = ({ type }) => {
     if (!match) return false;
     const hash = match[1].toLowerCase();
     return torboxList.some(t => t.hash && t.hash.toLowerCase() === hash);
-  };
-
-  const handleWatchMovie = async () => {
-    try {
-      setStreamLoading(true);
-      let targetMagnet = null;
-      if (torrents && torrents.length > 0) {
-        targetMagnet = torrents[0].magnet;
-      } else {
-        const imdbId = movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id);
-        const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
-        const searchName = type === 'tv' ? (movie.title || movie.name).trim() : `${movie.title || movie.name} ${year}`.trim();
-        const data = await searchTorbox(imdbId, searchName);
-        if (data && data.length > 0) {
-          targetMagnet = data[0].magnet;
-        }
-      }
-
-      if (!targetMagnet) {
-        toast.error("No streams available to watch.");
-        setStreamLoading(false);
-        return;
-      }
-
-      const { getStreamUrl } = await import('../services/torbox');
-      const data = await getStreamUrl(targetMagnet);
-      
-      setActiveStreamInfo(data);
-      const subUrl = await fetchSubtitles(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), 'movie');
-      setSubtitleUrl(subUrl);
-      
-      setStreamUrl(data.url);
-    } catch (err) {
-      toast.error('Failed to stream movie: ' + err.message);
-    } finally {
-      setStreamLoading(false);
-    }
-  };
-  const handleWatchEpisode = async (seasonNum, episodeNum) => {
-    try {
-      if (autoplayCountdown !== null) setAutoplayCountdown(null);
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-      
-      setStreamLoading(true);
-      const showName = movie.title || movie.name;
-      const { getEpisodeStreamUrl } = await import('../services/torbox');
-      const data = await getEpisodeStreamUrl(showName, seasonNum, episodeNum);
-      setPlayingTvContext({ season: seasonNum, episode: episodeNum });
-      // Mock intro fetch
-      setIntroData({ start: 5, end: 85 });
-      setPrecachedNext(false);
-      setActiveStreamInfo(data);
-      
-      const subUrl = await fetchSubtitles(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), 'tv', seasonNum, episodeNum);
-      setSubtitleUrl(subUrl);
-      
-      setStreamUrl(data.url);
-    } catch (err) {
-      toast.error('Failed to stream episode: ' + err.message);
-      setAutoplayCountdown(null);
-    } finally {
-      setStreamLoading(false);
-    }
-  };
-
-  const startAutoplayCountdown = (currentSeason, currentEpisode) => {
-    let nextSeason = currentSeason;
-    let nextEpisode = currentEpisode + 1;
-    
-    // Very basic check if we crossed season boundary (assumes current seasonData is loaded)
-    if (seasonData && seasonData.episodes && currentEpisode >= seasonData.episodes.length) {
-      nextSeason = currentSeason + 1;
-      nextEpisode = 1;
-    }
-
-    setAutoplayCountdown(5);
-    
-    countdownTimerRef.current = setInterval(() => {
-      setAutoplayCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownTimerRef.current);
-          handleWatchEpisode(nextSeason, nextEpisode);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
   };
   const [isPlayerIdle, setIsPlayerIdle] = useState(false);
   const idleTimerRef = useRef(null);
@@ -332,24 +104,7 @@ const MovieDetails = ({ type }) => {
     subtitleUrl: subtitleUrl
   }), [streamUrl, subtitleUrl]);
 
-  const handleActorClick = async (actor) => {
-    if (selectedActor === actor.id) {
-      setSelectedActor(null);
-      setActorCredits([]);
-      return;
-    }
-    setSelectedActor(actor.id);
-    try {
-      const { getPersonCredits } = await import('../services/tmdb');
-      const data = await getPersonCredits(actor.id);
-      const validCredits = data.cast
-        .filter(c => (c.release_date || c.first_air_date) && new Date(c.release_date || c.first_air_date) <= new Date())
-        .sort((a, b) => b.popularity - a.popularity);
-      setActorCredits(validCredits);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+
 
   const getCachedBadge = (titleStr) => {
     if (!torboxList || torboxList.length === 0 || !titleStr) return false;
@@ -423,11 +178,10 @@ const MovieDetails = ({ type }) => {
 
     player.on('ended', () => {
       if (type === 'tv' && playingTvContext) {
-        // Exit fullscreen to show overlay safely, or just show overlay
         if (document.fullscreenElement) {
           document.exitFullscreen().catch(e => console.log(e));
         }
-        startAutoplayCountdown(playingTvContext.season, playingTvContext.episode);
+        startAutoplayCountdown(playingTvContext.season, playingTvContext.episode, seasonData);
       }
     });
   };

@@ -74,27 +74,51 @@ app.get('/api/test-env', (req, res) => {
 });
 
 app.get('/api/watchlist', authenticate, async (req, res) => {
-  res.json(await getWatchlist(req.user.id));
+  try {
+    res.json(await getWatchlist(req.user.id));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/watchlist', authenticate, async (req, res) => {
-  res.json(await addToWatchlist(req.user.id, req.body.item));
+  try {
+    res.json(await addToWatchlist(req.user.id, req.body.item));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/watchlist/:mediaType/:itemId', authenticate, async (req, res) => {
-  res.json(await removeFromWatchlist(req.user.id, req.params.itemId, req.params.mediaType));
+  try {
+    res.json(await removeFromWatchlist(req.user.id, req.params.itemId, req.params.mediaType));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/history', authenticate, async (req, res) => {
-  res.json(await getHistory(req.user.id));
+  try {
+    res.json(await getHistory(req.user.id));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/history', authenticate, async (req, res) => {
-  res.json(await updateHistory(req.user.id, req.body.item, req.body.progress, req.body.duration, req.body.season, req.body.episode));
+  try {
+    res.json(await updateHistory(req.user.id, req.body.item, req.body.progress, req.body.duration, req.body.season, req.body.episode));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/history/:mediaType/:itemId', authenticate, async (req, res) => {
-  res.json(await removeFromHistory(req.user.id, req.params.itemId, req.params.mediaType));
+  try {
+    res.json(await removeFromHistory(req.user.id, req.params.itemId, req.params.mediaType));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Configure robust native proxies using http-proxy-middleware
@@ -115,18 +139,35 @@ const onProxyReq = (proxyReq, req, res, apiType) => {
   }
 };
 
+const proxyOptions = {
+  timeout: 10000,
+  proxyTimeout: 10000,
+  on: {
+    error: (err, req, res) => {
+      console.error('Proxy Error:', err.message);
+      if (!res.headersSent) {
+        res.status(502).json({ error: 'Bad Gateway: Upstream server timed out or failed.' });
+      }
+    }
+  }
+};
+
 app.use('/api/apibay', createProxyMiddleware({
   target: 'https://apibay.org',
   changeOrigin: true,
-  pathRewrite: { '^/api/apibay': '' }
+  pathRewrite: { '^/api/apibay': '' },
+  ...proxyOptions
 }));
 
 app.use('/api/torbox', createProxyMiddleware({
   target: 'https://api.torbox.app/v1/api/torrents',
   changeOrigin: true,
   pathRewrite: { '^/api/torbox': '' },
+  timeout: 10000,
+  proxyTimeout: 10000,
   on: {
-    proxyReq: (proxyReq, req, res) => onProxyReq(proxyReq, req, res, 'torbox')
+    proxyReq: (proxyReq, req, res) => onProxyReq(proxyReq, req, res, 'torbox'),
+    error: proxyOptions.on.error
   }
 }));
 
@@ -134,15 +175,19 @@ app.use('/api/tmdb', createProxyMiddleware({
   target: 'https://api.themoviedb.org/3',
   changeOrigin: true,
   pathRewrite: { '^/api/tmdb': '' },
+  timeout: 10000,
+  proxyTimeout: 10000,
   on: {
-    proxyReq: (proxyReq, req, res) => onProxyReq(proxyReq, req, res, 'tmdb')
+    proxyReq: (proxyReq, req, res) => onProxyReq(proxyReq, req, res, 'tmdb'),
+    error: proxyOptions.on.error
   }
 }));
 
 app.use('/api/yts', createProxyMiddleware({
   target: 'https://yts.mx/api/v2',
   changeOrigin: true,
-  pathRewrite: { '^/api/yts': '' }
+  pathRewrite: { '^/api/yts': '' },
+  ...proxyOptions
 }));
 
 // Serve static frontend files from the "dist" directory
