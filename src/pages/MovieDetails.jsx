@@ -11,7 +11,10 @@ import './FullScreenPlayer.css';
 import '../components/Skeleton.css';
 
 import { useWatchlist, useWatchHistory } from '../hooks/useUserData';
-import { useMovieDetails } from '../hooks/useMovieDetails';
+import { useMovieData } from '../hooks/useMovieData';
+import { useTvSeasons } from '../hooks/useTvSeasons';
+import { useTorboxSearch } from '../hooks/useTorboxSearch';
+import { useCastSpotlight } from '../hooks/useCastSpotlight';
 import { useTorboxStream } from '../hooks/useTorboxStream';
 
 const MovieDetails = ({ type }) => {
@@ -21,14 +24,11 @@ const MovieDetails = ({ type }) => {
   const { saveProgress, getProgress } = useWatchHistory();
   const inList = isInWatchlist(Number(id));
 
-  const {
-    movie, loading, error, themeColor, 
-    torrents, loadingTorrents, currentSearchTitle, fetchTorrents,
-    torboxList, fetchMyTorboxList, downloadedMagnets, setDownloadedMagnets,
-    selectedSeason, setSelectedSeason, seasonData, loadingSeason,
-    collectionData, selectedActor, actorCredits, handleActorClick,
-    introData
-  } = useMovieDetails(id, type);
+  const { movie, loading, error, themeColor, collectionData, introData } = useMovieData(id, type);
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const { seasonData, loadingSeason } = useTvSeasons(id, type, selectedSeason);
+  const { torrents, loadingTorrents, currentSearchTitle, fetchTorrents, torboxList, fetchMyTorboxList, downloadedMagnets, setDownloadedMagnets } = useTorboxSearch(movie, type);
+  const { selectedActor, actorCredits, handleActorClick } = useCastSpotlight();
 
   const {
     streamUrl, setStreamUrl, subtitleUrl, streamLoading, activeStreamInfo,
