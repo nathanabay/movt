@@ -22,15 +22,24 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
     });
 
     // Sort logic for "Best" torrent:
-    // 1. Penalize unplayable web audios (DTS, TrueHD)
-    // 2. Prioritize TorBox Cached torrents
-    // 3. Fallback to highest seeders
+    // 1. Prioritize explicitly Web-safe audio (AAC, AC3)
+    // 2. Penalize unplayable web audios (DTS, TrueHD, FLAC)
+    // 3. Prioritize TorBox Cached torrents
+    // 4. Fallback to highest seeders
     parsed.sort((a, b) => {
+      const aGoodAudio = a.audio === 'AAC' || a.audio === 'AC3';
+      const bGoodAudio = b.audio === 'AAC' || b.audio === 'AC3';
+      
       const aBadAudio = a.audio === 'DTS' || a.audio === 'TrueHD' || a.audio === 'FLAC';
       const bBadAudio = b.audio === 'DTS' || b.audio === 'TrueHD' || b.audio === 'FLAC';
       
+      // Punish bad audio
       if (aBadAudio && !bBadAudio) return 1;
       if (!aBadAudio && bBadAudio) return -1;
+      
+      // Reward good audio
+      if (aGoodAudio && !bGoodAudio) return -1;
+      if (!aGoodAudio && bGoodAudio) return 1;
       
       if (a.isCached && !b.isCached) return -1;
       if (!a.isCached && b.isCached) return 1;
@@ -117,6 +126,9 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
                   )}
                   {t.codec !== 'Unknown' && (
                     <span style={{ padding: '2px 6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px', fontSize: '0.75rem' }}>{t.codec}</span>
+                  )}
+                  {t.audio !== 'Unknown' && (
+                    <span style={{ padding: '2px 6px', backgroundColor: 'rgba(155,89,182,0.3)', color: '#d2b4de', borderRadius: '4px', fontSize: '0.75rem' }}>🎵 {t.audio}</span>
                   )}
                   {t.isCamOrTs && (
                     <span style={{ padding: '2px 6px', backgroundColor: 'rgba(231, 76, 60, 0.2)', color: '#e74c3c', borderRadius: '4px', fontSize: '0.75rem' }}>CAM/TS</span>
