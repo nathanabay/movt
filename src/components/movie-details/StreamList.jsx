@@ -21,39 +21,39 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
       return parseInt(b) - parseInt(a);
     });
 
-    // Sonarr/Radarr Custom Format Audio Scoring System
+    // Web-Playable Audio Scoring System (Apple / Browser Safe)
     const getAudioScore = (audio) => {
       switch(audio) {
-        case 'TrueHD': return 100; // Uncompressed high-fidelity
-        case 'DTS': return 80;    // Usually DTS-HD MA
-        case 'FLAC': return 70;   // Lossless
-        case 'AC3': return 40;    // Standard Dolby Digital / E-AC3
-        case 'AAC': return 20;    // Web standard compressed
-        default: return 0;        // Unknown
+        case 'AAC': return 100;    // Universally supported web audio
+        case 'AC3': return 80;     // Dolby Digital, natively supported on Apple/Edge
+        case 'FLAC': return -100;  // Will NOT play in standard web players
+        case 'DTS': return -100;   // Silent video in browsers
+        case 'TrueHD': return -100;// Silent video in browsers
+        default: return 40;        // Unknown (Might be AAC, don't penalize too much)
       }
     };
 
-    // Sonarr/Radarr Custom Format Codec Scoring System
+    // Web-Playable Video Codec Scoring System (Apple / Browser Safe)
     const getCodecScore = (codec) => {
       switch(codec) {
-        case 'AV1': return 100;    // Highly advanced, smallest size
-        case 'x265': return 80;    // Modern standard, half size
-        case 'x264': return 40;    // Universal standard
-        case 'XviD': return -100;  // Legacy, penalize heavily
-        default: return 0;         // Unknown
+        case 'x264': return 100;   // Universally supported H.264
+        case 'x265': return 80;    // HEVC, natively supported on Apple Devices
+        case 'AV1': return 20;     // Not natively supported on most Apple devices/Safari yet
+        case 'XviD': return -100;  // Usually in AVI containers, unsupported on web
+        default: return 40;        // Unknown
       }
     };
 
     // Sort logic for "Best" torrent:
     // 1. Prioritize TorBox Cached torrents
-    // 2. Radarr Total Score (Audio + Codec)
+    // 2. Web-Playable Total Score (Audio + Codec)
     // 3. Fallback to highest seeders
     parsed.sort((a, b) => {
       // 1. Cached
       if (a.isCached && !b.isCached) return -1;
       if (!a.isCached && b.isCached) return 1;
 
-      // 2. Radarr Total Score
+      // 2. Web-Playable Total Score
       const aTotal = getAudioScore(a.audio) + getCodecScore(a.codec);
       const bTotal = getAudioScore(b.audio) + getCodecScore(b.codec);
       if (aTotal !== bTotal) {
