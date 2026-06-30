@@ -3,11 +3,9 @@ import { Download, Check } from 'lucide-react';
 import { parseReleaseName } from '../../utils/qualityParser';
 
 const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMagnetDownloaded, handleDownload }) => {
-  const [selectedQuality, setSelectedQuality] = useState('All');
-
   // Parse all torrents and derive available qualities
-  const { filteredTorrents, availableQualities } = useMemo(() => {
-    if (!torrents) return { filteredTorrents: [], availableQualities: ['All'] };
+  const { parsedTorrents, availableQualities } = useMemo(() => {
+    if (!torrents) return { parsedTorrents: [], availableQualities: [] };
     
     const parsed = torrents.map(t => {
       const parsedData = parseReleaseName(t.name);
@@ -17,18 +15,17 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
     const qualities = new Set(parsed.map(t => t.resolution).filter(r => r && r !== 'Unknown'));
     
     // Sort qualities: 4K > 1080p > 720p > etc.
-    const sortedQualities = ['All', ...Array.from(qualities).sort((a, b) => {
+    const sortedQualities = Array.from(qualities).sort((a, b) => {
       if (a === '4K') return -1;
       if (b === '4K') return 1;
       return parseInt(b) - parseInt(a);
-    })];
+    });
 
-    const filtered = selectedQuality === 'All' 
-      ? parsed 
-      : parsed.filter(t => t.resolution === selectedQuality);
+    // Sort all torrents by seeders by default
+    parsed.sort((a, b) => b.seeders - a.seeders);
 
-    return { filteredTorrents: filtered, availableQualities: sortedQualities };
-  }, [torrents, selectedQuality]);
+    return { parsedTorrents: parsed, availableQualities: sortedQualities };
+  }, [torrents]);
 
   return (
     <div id="torbox-streams-section" className="torbox-section">
@@ -38,32 +35,43 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
           {loadingTorrents && <div className="spinner-small"></div>}
         </div>
         
-        {torrents && torrents.length > 0 && (
+        {torrents && torrents.length > 0 && availableQualities.length > 0 && (
           <div className="quality-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-            <span style={{ fontSize: '0.9rem', color: '#ccc', marginRight: '4px' }}>Quality:</span>
-            {availableQualities.map(q => (
-              <button
-                key={q}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedQuality(q);
-                }}
-                style={{
-                  backgroundColor: selectedQuality === q ? '#e50914' : 'rgba(255,255,255,0.1)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  fontWeight: selectedQuality === q ? 'bold' : 'normal',
-                  whiteSpace: 'nowrap',
-                  transition: 'background-color 0.2s'
-                }}
-              >
-                {q === 'All' ? 'All' : q}
-              </button>
-            ))}
+            <span style={{ fontSize: '0.9rem', color: '#ccc', marginRight: '4px' }}>Auto-Download Best:</span>
+            {availableQualities.map(q => {
+              const bestTorrent = parsedTorrents.find(t => t.resolution === q);
+              if (!bestTorrent) return null;
+              const isDownloaded = isMagnetDownloaded(bestTorrent.magnet);
+              
+              return (
+                <button
+                  key={q}
+                  disabled={isDownloaded}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isDownloaded) handleDownload(bestTorrent.magnet);
+                  }}
+                  title={isDownloaded ? "Already Downloaded" : `Auto-download the most seeded ${q} torrent`}
+                  style={{
+                    backgroundColor: isDownloaded ? 'rgba(255,255,255,0.1)' : '#e50914',
+                    color: isDownloaded ? '#888' : '#fff',
+                    border: 'none',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    outline: 'none',
+                    cursor: isDownloaded ? 'default' : 'pointer',
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {isDownloaded ? <Check size={14} /> : <Download size={14} />} {q}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -73,7 +81,7 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
           <p className="no-torrents">No TorBox streams found for this title.</p>
         )}
         
-        {filteredTorrents.map((t, idx) => (
+        {parsedTorrents.map((t, idx) => (
           <div key={idx} className="torrent-item-netflix" style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderBottomColor: 'rgba(255,255,255,0.05)' }}>
             <div className="torrent-index">{idx + 1}</div>
             <div className="torrent-info-netflix">
