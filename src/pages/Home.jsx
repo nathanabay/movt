@@ -25,11 +25,77 @@ const PrevArrow = ({ onClick }) => (
   </button>
 );
 
+const CatalogRow = ({ def, sliderSettings }) => {
+  const [inView, setInView] = useState(false);
+  const ref = useRef();
+  const sliderRef = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect(); // Load once
+        }
+      },
+      { rootMargin: '300px' } // Pre-load slightly before scrolling into view
+    );
+    
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  const { data, isLoading } = useQuery({
+    queryKey: Array.isArray(def.key) ? def.key : [def.key],
+    queryFn: def.fetcher,
+    staleTime: 10 * 60 * 1000,
+    enabled: inView // Only fire API when in view
+  });
+
+  const handleWheel = (e) => {
+    if (!sliderRef || !sliderRef.current) return;
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      e.preventDefault();
+      if (e.deltaX > 0) sliderRef.current.slickNext();
+      else sliderRef.current.slickPrev();
+    }
+  };
+
+  if (!inView || isLoading) {
+    return (
+      <section ref={ref} className="movies-row-section" style={{ minHeight: '300px' }}>
+        <h2 className="row-title">{def.name}</h2>
+        <div className="skeleton-row" style={{ marginTop: '10px' }}>
+          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton skeleton-card"></div>)}
+        </div>
+      </section>
+    );
+  }
+
+  const catalogMovies = data?.results || [];
+  if (catalogMovies.length === 0) return null;
+
+  return (
+    <section ref={ref} className="movies-row-section">
+      <h2 className="row-title">{def.name}</h2>
+      <div className="slick-row" onWheel={handleWheel}>
+        <SlickSlider ref={sliderRef} {...sliderSettings} infinite={catalogMovies.length > 6}>
+          {catalogMovies.map(movie => (
+            <div key={movie.id} className="row-item-wrapper">
+              <MovieCard movie={movie} />
+            </div>
+          ))}
+        </SlickSlider>
+      </div>
+    </section>
+  );
+};
+
 const Home = () => {
   const navigate = useNavigate();
-
   const trendingSliderRef = useRef(null);
-  const catalogSliderRefs = useRef({});
 
   const { watchlist } = useWatchlist();
   const { getContinueWatchingList } = useWatchHistory();
@@ -37,7 +103,8 @@ const Home = () => {
 
   const { data: trendingRes, isLoading: trendingLoading, error: trendingError } = useQuery({
     queryKey: ['trending', 'movie'],
-    queryFn: () => fetchTrending('movie')
+    queryFn: () => fetchTrending('movie'),
+    staleTime: 10 * 60 * 1000
   });
 
   const catalogDefinitions = useMemo(() => [
@@ -73,45 +140,6 @@ const Home = () => {
     { name: 'Documentaries', fetcher: () => fetchGenreContent(99, 'movie'), key: ['genre', 99, 'movie'] }
   ], []);
 
-  const [loadAll, setLoadAll] = useState(false);
-  
-  // Defer rendering of the heavy 30 catalogs until user scrolls or 1s passes
-  useEffect(() => {
-    const timer = setTimeout(() => setLoadAll(true), 1500);
-    const onScroll = () => {
-      setLoadAll(true);
-      window.removeEventListener('scroll', onScroll);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
-
-  const activeCatalogs = useMemo(() => {
-    return loadAll ? catalogDefinitions : catalogDefinitions.slice(0, 3);
-  }, [catalogDefinitions, loadAll]);
-
-  const catalogQueries = useQueries({
-    queries: activeCatalogs.map(def => ({
-      queryKey: Array.isArray(def.key) ? def.key : [def.key],
-      queryFn: def.fetcher,
-      staleTime: 10 * 60 * 1000, // 10 minutes specifically for catalogs
-    }))
-  });
-
-  const loading = trendingLoading;
-  const error = trendingError ? trendingError.message : null;
-  const trending = trendingRes?.results || [];
-
-  const catalogs = {};
-  catalogQueries.forEach((q, idx) => {
-    if (q.data && q.data.results) {
-      catalogs[catalogDefinitions[idx].name] = q.data.results;
-    }
-  });
-
   const sliderSettings = {
     dots: false,
     infinite: true,
@@ -131,19 +159,15 @@ const Home = () => {
   };
 
   const handleWheel = (e, sliderRef) => {
-    // Prevent default vertical scroll if they are scrolling heavily horizontally
     if (!sliderRef || !sliderRef.current) return;
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
       e.preventDefault();
-      if (e.deltaX > 0) {
-        sliderRef.current.slickNext();
-      } else {
-        sliderRef.current.slickPrev();
-      }
+      if (e.deltaX > 0) sliderRef.current.slickNext();
+      else sliderRef.current.slickPrev();
     }
   };
 
-  if (loading) return (
+  if (trendingLoading) return (
     <div className="home-page fade-in">
       <div className="skeleton skeleton-hero"></div>
       <div className="skeleton-row">
@@ -154,10 +178,11 @@ const Home = () => {
       </div>
     </div>
   );
-  if (error) return <div className="error-message">{error}</div>;
+  if (trendingError) return <div className="error-message">{trendingError.message}</div>;
 
-  const featuredMovie = trending[0];
-  const rowMovies = trending.slice(1);
+  const trendingMovies = trendingRes?.results || [];
+  const featuredMovie = trendingMovies[0];
+  const rowMovies = trendingMovies.slice(1);
 
   return (
     <div className="home-page fade-in">
@@ -190,7 +215,7 @@ const Home = () => {
       {continueWatching.length > 0 && (
         <section className="movies-row-section">
           <h2 className="row-title">Continue Watching</h2>
-          <div className="slick-row">
+          <div className="slick-row" onWheel={(e) => handleWheel(e, trendingSliderRef)}>
             <SlickSlider {...sliderSettings} infinite={continueWatching.length > 6}>
               {continueWatching.map(movie => (
                 <div key={movie.id} className="row-item-wrapper">
@@ -205,7 +230,7 @@ const Home = () => {
       {watchlist.length > 0 && (
         <section className="movies-row-section">
           <h2 className="row-title">My List</h2>
-          <div className="slick-row">
+          <div className="slick-row" onWheel={(e) => handleWheel(e, trendingSliderRef)}>
             <SlickSlider {...sliderSettings} infinite={watchlist.length > 6}>
               {watchlist.map(movie => (
                 <div key={movie.id} className="row-item-wrapper">
@@ -230,41 +255,10 @@ const Home = () => {
         </div>
       </section>
 
-      {catalogQueries.map((query, idx) => {
-        const def = activeCatalogs[idx];
-        
-        if (query.isLoading) {
-          return (
-            <section key={def.name + '_skeleton'} className="movies-row-section">
-              <h2 className="row-title">{def.name}</h2>
-              <div className="skeleton-row" style={{ marginTop: '10px' }}>
-                {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton skeleton-card"></div>)}
-              </div>
-            </section>
-          );
-        }
-
-        const catalogMovies = query.data?.results;
-        if (!catalogMovies || catalogMovies.length === 0) return null;
-        
-        return (
-          <section key={def.name} className="movies-row-section">
-            <h2 className="row-title">{def.name}</h2>
-            <div className="slick-row" onWheel={(e) => {
-              if (!catalogSliderRefs.current[def.name]) return;
-              handleWheel(e, { current: catalogSliderRefs.current[def.name] });
-            }}>
-              <SlickSlider ref={el => catalogSliderRefs.current[def.name] = el} {...sliderSettings} infinite={catalogMovies.length > 6}>
-                {catalogMovies.map(movie => (
-                  <div key={movie.id} className="row-item-wrapper">
-                    <MovieCard movie={movie} />
-                  </div>
-                ))}
-              </SlickSlider>
-            </div>
-          </section>
-        );
-      })}
+      {/* Render all catalogs using the Lazy CatalogRow component */}
+      {catalogDefinitions.map(def => (
+        <CatalogRow key={Array.isArray(def.key) ? def.key.join('-') : def.key} def={def} sliderSettings={sliderSettings} />
+      ))}
     </div>
   );
 };
