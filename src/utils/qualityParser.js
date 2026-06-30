@@ -3,14 +3,14 @@
  */
 
 const SourceRegex = new RegExp(
-  "\\\\b(?:" +
+  "\\b(?:" +
   "(?<bluray>M?Blu[-_. ]?Ray|HD[-_. ]?DVD|BD(?!$)|UHD2?BD|BDISO|BDMux|BD25|BD50|BR[-_. ]?DISK)|" +
-  "(?<webdl>WEB[-_. ]?DL(?:mux)?|AmazonHD|AmazonSD|iTunesHD|MaxdomeHD|NetflixU?HD|WebHD|HBOMaxHD|DisneyHD|[. ]WEB[. ](?:[xh][ .]?26[45]|AVC|HEVC|DDP?5[. ]1)|[. ]WEB$|(?:\\\\d{3,4}0p)[-. ](?:Hybrid[-_. ]?)?WEB[-. ]|[-. ]WEB[-. ]\\\\d{3,4}0p|\\\\b\\\\s/\\\\sWEB\\\\s/\\\\s\\\\b|(?:AMZN|NF|DP)[. -]WEB[. -](?!Rip))|" +
+  "(?<webdl>WEB[-_. ]?DL(?:mux)?|AmazonHD|AmazonSD|iTunesHD|MaxdomeHD|NetflixU?HD|WebHD|HBOMaxHD|DisneyHD|[. ]WEB[. ](?:[xh][ .]?26[45]|AVC|HEVC|DDP?5[. ]1)|[. ]WEB$|(?:\\d{3,4}0p)[-. ](?:Hybrid[-_. ]?)?WEB[-. ]|[-. ]WEB[-. ]\\d{3,4}0p|\\b\\s/\\sWEB\\s/\\s\\b|(?:AMZN|NF|DP)[. -]WEB[. -](?!Rip))|" +
   "(?<webrip>WebRip|Web-Rip|WEBMux)|" +
   "(?<hdtv>HDTV)|" +
   "(?<bdrip>BDRip|BDLight|HD[-_. ]?DVDRip|UHDBDRip)|" +
   "(?<brrip>BRRip)|" +
-  "(?<dvdr>\\\\d?x?M?DVD-?[R59])|" +
+  "(?<dvdr>\\d?x?M?DVD-?[R59])|" +
   "(?<dvd>DVD(?!-R)|DVDRip|xvidvd)|" +
   "(?<dsr>WS[-_. ]DSR|DSR)|" +
   "(?<regional>R[0-9]{1}|REGIONAL)|" +
@@ -22,29 +22,29 @@ const SourceRegex = new RegExp(
   "(?<pdtv>PDTV)|" +
   "(?<sdtv>SDTV)|" +
   "(?<tvrip>TVRip)" +
-  ")(?:\\\\b|$|[ .])",
+  ")(?:\\b|$|[ .])",
   "i"
 );
 
 const ResolutionRegex = new RegExp(
-  "\\\\b(?:(?<R360p>360p)|(?<R480p>480p|480i|640x480|848x480)|(?<R540p>540p)|(?<R576p>576p)|(?<R720p>720p|1280x720|960p)|(?<R1080p>1080p|1920x1080|1440p|FHD|1080i|4kto1080p)|(?<R2160p>2160p|3840x2160|4k[-_. ](?:UHD|HEVC|BD|H\\\\.?265)|(?:UHD|HEVC|BD|H\\\\.?265)[-_. ]4k))\\\\b",
+  "\\b(?:(?<R360p>360p)|(?<R480p>480p|480i|640x480|848x480)|(?<R540p>540p)|(?<R576p>576p)|(?<R720p>720p|1280x720|960p)|(?<R1080p>1080p|1920x1080|1440p|FHD|1080i|4kto1080p)|(?<R2160p>2160p|3840x2160|4k[-_. ](?:UHD|HEVC|BD|H\\.?265)|(?:UHD|HEVC|BD|H\\.?265)[-_. ]4k))\\b",
   "i"
 );
 
-const AlternativeResolutionRegex = new RegExp("\\\\b(?<R2160p>UHD)\\\\b|(?<R2160p>\\\\[4K\\\\])", "i");
+const AlternativeResolutionRegex = new RegExp("\\b(?<R2160p>UHD)\\b|(?<R2160p>\\[4K\\])", "i");
 
 const CodecRegex = new RegExp(
-  "\\\\b(?:(?<x264>x264)|(?<h264>h264)|(?<x265>x265)|(?<h265>h265)|(?<hevc>hevc)|(?<xvidhd>XvidHD)|(?<xvid>X-?vid)|(?<divx>divx))\\\\b",
+  "\\b(?:(?<x264>x264)|(?<h264>h264)|(?<x265>x265)|(?<h265>h265)|(?<hevc>hevc)|(?<xvidhd>XvidHD)|(?<xvid>X-?vid)|(?<divx>divx))\\b",
   "i"
 );
 
 const RemuxRegex = new RegExp(
-  "(?:[_. \\\\[]|\\\\d{4}p-|\\\\bHybrid-)?(?<remux>(?:(BD|UHD)[-_. ]?)?Remux)\\\\b|(?<remux>(?:(BD|UHD)[-_. ]?)?Remux[_. ]\\\\d{4}p)",
+  "(?:[_. \\[]|\\d{4}p-|\\bHybrid-)?(?<remux>(?:(BD|UHD)[-_. ]?)?Remux)\\b|(?<remux>(?:(BD|UHD)[-_. ]?)?Remux[_. ]\\d{4}p)",
   "i"
 );
 
 const AudioRegex = new RegExp(
-  "\\\\b(?:(?<ac3>AC3|EAC3|E-AC3)|(?<dts>DTS|DTS-HD)|(?<truehd>TrueHD)|(?<aac>AAC)|(?<flac>FLAC)|(?<atmos>Atmos))\\\\b",
+  "\\b(?:(?<ac3>AC3|EAC3|E-AC3)|(?<dts>DTS|DTS-HD)|(?<truehd>TrueHD)|(?<aac>AAC)|(?<flac>FLAC)|(?<atmos>Atmos))\\b",
   "i"
 );
 
