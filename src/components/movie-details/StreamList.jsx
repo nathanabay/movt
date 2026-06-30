@@ -33,20 +33,31 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
       }
     };
 
+    // Sonarr/Radarr Custom Format Codec Scoring System
+    const getCodecScore = (codec) => {
+      switch(codec) {
+        case 'AV1': return 100;    // Highly advanced, smallest size
+        case 'x265': return 80;    // Modern standard, half size
+        case 'x264': return 40;    // Universal standard
+        case 'XviD': return -100;  // Legacy, penalize heavily
+        default: return 0;         // Unknown
+      }
+    };
+
     // Sort logic for "Best" torrent:
     // 1. Prioritize TorBox Cached torrents
-    // 2. Radarr Audio Score
+    // 2. Radarr Total Score (Audio + Codec)
     // 3. Fallback to highest seeders
     parsed.sort((a, b) => {
       // 1. Cached
       if (a.isCached && !b.isCached) return -1;
       if (!a.isCached && b.isCached) return 1;
 
-      // 2. Radarr Audio Score
-      const aScore = getAudioScore(a.audio);
-      const bScore = getAudioScore(b.audio);
-      if (aScore !== bScore) {
-        return bScore - aScore;
+      // 2. Radarr Total Score
+      const aTotal = getAudioScore(a.audio) + getCodecScore(a.codec);
+      const bTotal = getAudioScore(b.audio) + getCodecScore(b.codec);
+      if (aTotal !== bTotal) {
+        return bTotal - aTotal;
       }
 
       // 3. Seeders

@@ -34,7 +34,7 @@ const ResolutionRegex = new RegExp(
 const AlternativeResolutionRegex = new RegExp("\\b(?<R2160p>UHD)\\b|(?<R2160p>\\[4K\\])", "i");
 
 const CodecRegex = new RegExp(
-  "\\b(?:(?<x264>x264)|(?<h264>h264)|(?<x265>x265)|(?<h265>h265)|(?<hevc>hevc)|(?<xvidhd>XvidHD)|(?<xvid>X-?vid)|(?<divx>divx))\\b",
+  "\\b(?:(?<av1>av1)|(?<x264>x264)|(?<h264>h264|avc)|(?<x265>x265)|(?<h265>h265)|(?<hevc>hevc)|(?<xvidhd>XvidHD)|(?<xvid>X-?vid)|(?<divx>divx))\\b",
   "i"
 );
 
@@ -97,9 +97,10 @@ export const parseReleaseName = (name) => {
   // 3. Codec
   const codecMatch = CodecRegex.exec(normalizedName);
   if (codecMatch && codecMatch.groups) {
-    if (codecMatch.groups.x265 || codecMatch.groups.h265 || codecMatch.groups.hevc) result.codec = 'x265';
+    if (codecMatch.groups.av1) result.codec = 'AV1';
+    else if (codecMatch.groups.x265 || codecMatch.groups.h265 || codecMatch.groups.hevc) result.codec = 'x265';
     else if (codecMatch.groups.x264 || codecMatch.groups.h264) result.codec = 'x264';
-    else if (codecMatch.groups.xvid || codecMatch.groups.xvidhd) result.codec = 'XviD';
+    else if (codecMatch.groups.xvid || codecMatch.groups.xvidhd || codecMatch.groups.divx) result.codec = 'XviD';
   }
 
   // 4. Audio
