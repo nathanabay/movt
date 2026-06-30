@@ -21,8 +21,19 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
       return parseInt(b) - parseInt(a);
     });
 
-    // Sort all torrents by seeders by default
-    parsed.sort((a, b) => b.seeders - a.seeders);
+    // Sort logic for "Best" torrent:
+    // 1. Penalize CAM/TS rips
+    // 2. Prioritize TorBox Cached torrents
+    // 3. Fallback to highest seeders
+    parsed.sort((a, b) => {
+      if (a.isCamOrTs && !b.isCamOrTs) return 1;
+      if (!a.isCamOrTs && b.isCamOrTs) return -1;
+      
+      if (a.isCached && !b.isCached) return -1;
+      if (!a.isCached && b.isCached) return 1;
+
+      return b.seeders - a.seeders;
+    });
 
     return { parsedTorrents: parsed, availableQualities: sortedQualities };
   }, [torrents]);
