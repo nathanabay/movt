@@ -241,6 +241,9 @@ const MovieDetails = ({ type }) => {
       >
         <div className={`player-top-overlay ${isPlayerIdle ? 'hidden' : ''}`}>
             <button className="close-player-btn-new" onClick={() => {
+              if (document.pictureInPictureElement) {
+                document.exitPictureInPicture().catch(() => {});
+              }
               setStreamUrl(null);
               setAutoplayCountdown(null);
               if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
@@ -296,21 +299,39 @@ const MovieDetails = ({ type }) => {
                 </div>
               )}
 
-              <button 
-                className="btn-player-episodes" 
-                onClick={() => {
-                  const videoElement = document.querySelector('.video-js video');
-                  if (videoElement && document.pictureInPictureEnabled) {
-                    if (document.pictureInPictureElement) {
-                      document.exitPictureInPicture().catch(()=>toast.error("Failed to exit PiP"));
+              { (document.pictureInPictureEnabled || (document.createElement('video').webkitSupportsPresentationMode && typeof document.createElement('video').webkitSetPresentationMode === 'function')) && (
+                <button 
+                  className="btn-player-episodes" 
+                  onClick={() => {
+                    const videoElement = document.querySelector('.video-js video');
+                    if (!videoElement) return;
+
+                    // Standard API (Chrome, Edge, Safari 14+)
+                    if (document.pictureInPictureEnabled) {
+                      if (document.pictureInPictureElement) {
+                        document.exitPictureInPicture().catch(()=>toast.error("Failed to exit PiP"));
+                      } else {
+                        videoElement.requestPictureInPicture().catch(()=>toast.error("Failed to enter PiP"));
+                      }
+                    } 
+                    // Fallback for older Safari / iOS
+                    else if (videoElement.webkitSupportsPresentationMode && typeof videoElement.webkitSetPresentationMode === 'function') {
+                      const currentMode = videoElement.webkitPresentationMode;
+                      if (currentMode === 'picture-in-picture') {
+                        videoElement.webkitSetPresentationMode('inline');
+                        setIsPiPActive(false);
+                      } else {
+                        videoElement.webkitSetPresentationMode('picture-in-picture');
+                        setIsPiPActive(true);
+                      }
                     } else {
-                      videoElement.requestPictureInPicture().catch(()=>toast.error("Failed to enter PiP"));
+                      toast.error("Picture-in-Picture is not supported in this browser.");
                     }
-                  }
-                }}
-              >
-                <PictureInPicture size={20} /> {isPiPActive ? 'Exit PiP' : 'PiP'}
-              </button>
+                  }}
+                >
+                  <PictureInPicture size={20} /> {isPiPActive ? 'Exit PiP' : 'PiP'}
+                </button>
+              )}
 
             {type === 'tv' && playingTvContext && seasonData && (
                 <>
