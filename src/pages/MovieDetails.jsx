@@ -86,17 +86,19 @@ const MovieDetails = ({ type }) => {
     // Block redownload for TV shows if the specific season/episode search is mapped
     if (type === 'tv' && currentSearchTitle) {
       const cleanShowName = (movie.title || movie.name || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
-      const matchedShowKey = mappedLibrary ? Object.keys(mappedLibrary).find(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : null;
-      if (matchedShowKey) {
+      const matchedShowKeys = mappedLibrary ? Object.keys(mappedLibrary).filter(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : [];
+      
+      if (matchedShowKeys.length > 0) {
         const epMatch = currentSearchTitle.match(/[sS](\d{1,2})[eE](\d{1,2})/);
         const seasonMatch = currentSearchTitle.match(/[sS](\d{1,2})$/);
+        
         if (epMatch) {
           const s = parseInt(epMatch[1], 10);
           const e = parseInt(epMatch[2], 10);
-          if (mappedLibrary[matchedShowKey]?.[s]?.[e]) return true;
+          if (matchedShowKeys.some(k => mappedLibrary[k]?.[s]?.[e])) return true;
         } else if (seasonMatch) {
           const s = parseInt(seasonMatch[1], 10);
-          if (mappedLibrary[matchedShowKey]?.[s] && Object.keys(mappedLibrary[matchedShowKey][s]).length > 0) return true;
+          if (matchedShowKeys.some(k => mappedLibrary[k]?.[s] && Object.keys(mappedLibrary[k][s]).length > 0)) return true;
         }
       }
     }

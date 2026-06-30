@@ -6,8 +6,8 @@ const EpisodesList = ({
   loadingSeason, seasonData, mappedLibrary, handleWatchEpisode 
 }) => {
   const cleanShowName = (movie.title || movie.name || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
-  const matchedShowKey = mappedLibrary ? Object.keys(mappedLibrary).find(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : null;
-  const isSeasonDownloaded = !!(matchedShowKey && mappedLibrary[matchedShowKey]?.[selectedSeason] && Object.keys(mappedLibrary[matchedShowKey][selectedSeason]).length > 0);
+  const matchedShowKeys = mappedLibrary ? Object.keys(mappedLibrary).filter(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : [];
+  const isSeasonDownloaded = matchedShowKeys.some(k => mappedLibrary[k]?.[selectedSeason] && Object.keys(mappedLibrary[k][selectedSeason]).length > 0);
 
   return (
     <div className="episodes-section">
@@ -50,7 +50,7 @@ const EpisodesList = ({
           {seasonData.episodes.map((episode) => {
             
             // Fast O(1) check
-            const isDownloaded = !!(matchedShowKey && mappedLibrary[matchedShowKey]?.[selectedSeason]?.[episode.episode_number]);
+            const isDownloaded = matchedShowKeys.some(k => mappedLibrary[k]?.[selectedSeason]?.[episode.episode_number]);
 
             return (
               <div 
