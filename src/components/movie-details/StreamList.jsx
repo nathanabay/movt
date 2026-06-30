@@ -21,29 +21,35 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
       return parseInt(b) - parseInt(a);
     });
 
+    // Sonarr/Radarr Custom Format Audio Scoring System
+    const getAudioScore = (audio) => {
+      switch(audio) {
+        case 'TrueHD': return 100; // Uncompressed high-fidelity
+        case 'DTS': return 80;    // Usually DTS-HD MA
+        case 'FLAC': return 70;   // Lossless
+        case 'AC3': return 40;    // Standard Dolby Digital / E-AC3
+        case 'AAC': return 20;    // Web standard compressed
+        default: return 0;        // Unknown
+      }
+    };
+
     // Sort logic for "Best" torrent:
-    // 1. Prioritize explicitly Web-safe audio (AAC, AC3)
-    // 2. Penalize unplayable web audios (DTS, TrueHD, FLAC)
-    // 3. Prioritize TorBox Cached torrents
-    // 4. Fallback to highest seeders
+    // 1. Prioritize TorBox Cached torrents
+    // 2. Radarr Audio Score
+    // 3. Fallback to highest seeders
     parsed.sort((a, b) => {
-      const aGoodAudio = a.audio === 'AAC' || a.audio === 'AC3';
-      const bGoodAudio = b.audio === 'AAC' || b.audio === 'AC3';
-      
-      const aBadAudio = a.audio === 'DTS' || a.audio === 'TrueHD' || a.audio === 'FLAC';
-      const bBadAudio = b.audio === 'DTS' || b.audio === 'TrueHD' || b.audio === 'FLAC';
-      
-      // Punish bad audio
-      if (aBadAudio && !bBadAudio) return 1;
-      if (!aBadAudio && bBadAudio) return -1;
-      
-      // Reward good audio
-      if (aGoodAudio && !bGoodAudio) return -1;
-      if (!aGoodAudio && bGoodAudio) return 1;
-      
+      // 1. Cached
       if (a.isCached && !b.isCached) return -1;
       if (!a.isCached && b.isCached) return 1;
 
+      // 2. Radarr Audio Score
+      const aScore = getAudioScore(a.audio);
+      const bScore = getAudioScore(b.audio);
+      if (aScore !== bScore) {
+        return bScore - aScore;
+      }
+
+      // 3. Seeders
       return b.seeders - a.seeders;
     });
 
