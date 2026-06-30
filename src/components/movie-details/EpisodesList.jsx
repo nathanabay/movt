@@ -5,6 +5,10 @@ const EpisodesList = ({
   movie, selectedSeason, setSelectedSeason, fetchTorrents, 
   loadingSeason, seasonData, mappedLibrary, handleWatchEpisode 
 }) => {
+  const cleanShowName = (movie.title || movie.name || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
+  const matchedShowKey = mappedLibrary ? Object.keys(mappedLibrary).find(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : null;
+  const isSeasonDownloaded = !!(matchedShowKey && mappedLibrary[matchedShowKey]?.[selectedSeason] && Object.keys(mappedLibrary[matchedShowKey][selectedSeason]).length > 0);
+
   return (
     <div className="episodes-section">
       <div className="episodes-header">
@@ -23,15 +27,18 @@ const EpisodesList = ({
           </select>
           <button 
             className="btn-download-netflix" 
-            style={{ width: 'auto', padding: '0 1rem', borderRadius: '4px', height: '38px', fontSize: '0.9rem', gap: '0.5rem' }}
+            disabled={isSeasonDownloaded}
+            title={isSeasonDownloaded ? "Season already mapped in TorBox" : "Download Season"}
+            style={{ width: 'auto', padding: '0 1rem', borderRadius: '4px', height: '38px', fontSize: '0.9rem', gap: '0.5rem', opacity: isSeasonDownloaded ? 0.5 : 1, cursor: isSeasonDownloaded ? 'default' : 'pointer' }}
             onClick={() => {
+              if (isSeasonDownloaded) return;
               const seasonStr = selectedSeason < 10 ? `S0${selectedSeason}` : `S${selectedSeason}`;
               const query = `${movie.title || movie.name} ${seasonStr}`.trim();
               fetchTorrents(movie.imdb_id || (movie.external_ids && movie.external_ids.imdb_id), movie.title || movie.name, query);
               document.getElementById('torbox-streams-section')?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
-            <Download size={16} /> Season
+            {isSeasonDownloaded ? <Check size={16} /> : <Download size={16} />} Season
           </button>
         </div>
       </div>
@@ -42,9 +49,7 @@ const EpisodesList = ({
         <div className="episodes-list">
           {seasonData.episodes.map((episode) => {
             
-            // Fast O(1) check with partial matching
-            const cleanShowName = (movie.title || movie.name || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
-            const matchedShowKey = mappedLibrary ? Object.keys(mappedLibrary).find(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : null;
+            // Fast O(1) check
             const isDownloaded = !!(matchedShowKey && mappedLibrary[matchedShowKey]?.[selectedSeason]?.[episode.episode_number]);
 
             return (

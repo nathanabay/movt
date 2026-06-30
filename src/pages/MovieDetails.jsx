@@ -78,7 +78,30 @@ const MovieDetails = ({ type }) => {
     const match = magnet.match(/urn:btih:([^&]+)/i);
     if (!match) return false;
     const hash = match[1].toLowerCase();
-    return torboxList.some(t => t.hash && t.hash.toLowerCase() === hash);
+    if (torboxList.some(t => t.hash && t.hash.toLowerCase() === hash)) return true;
+
+    // Block redownload if entire movie is already in TorBox
+    if (type === 'movie' && getCachedBadge(movie.title || movie.name)) return true;
+
+    // Block redownload for TV shows if the specific season/episode search is mapped
+    if (type === 'tv' && currentSearchTitle) {
+      const cleanShowName = (movie.title || movie.name || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
+      const matchedShowKey = mappedLibrary ? Object.keys(mappedLibrary).find(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : null;
+      if (matchedShowKey) {
+        const epMatch = currentSearchTitle.match(/[sS](\d{1,2})[eE](\d{1,2})/);
+        const seasonMatch = currentSearchTitle.match(/[sS](\d{1,2})$/);
+        if (epMatch) {
+          const s = parseInt(epMatch[1], 10);
+          const e = parseInt(epMatch[2], 10);
+          if (mappedLibrary[matchedShowKey]?.[s]?.[e]) return true;
+        } else if (seasonMatch) {
+          const s = parseInt(seasonMatch[1], 10);
+          if (mappedLibrary[matchedShowKey]?.[s] && Object.keys(mappedLibrary[matchedShowKey][s]).length > 0) return true;
+        }
+      }
+    }
+    
+    return false;
   };
   const [isPlayerIdle, setIsPlayerIdle] = useState(false);
   const idleTimerRef = useRef(null);
