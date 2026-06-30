@@ -22,13 +22,9 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
     });
 
     // Sort logic for "Best" torrent:
-    // 1. Penalize CAM/TS rips
-    // 2. Prioritize TorBox Cached torrents
-    // 3. Fallback to highest seeders
+    // 1. Prioritize TorBox Cached torrents
+    // 2. Fallback to highest seeders
     parsed.sort((a, b) => {
-      if (a.isCamOrTs && !b.isCamOrTs) return 1;
-      if (!a.isCamOrTs && b.isCamOrTs) return -1;
-      
       if (a.isCached && !b.isCached) return -1;
       if (!a.isCached && b.isCached) return 1;
 
