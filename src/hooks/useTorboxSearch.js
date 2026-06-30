@@ -13,7 +13,8 @@ export const useTorboxSearch = (movie, type) => {
     try {
       setLoadingTorrents(true);
       const rawQuery = customQuery || title;
-      const queryToUse = rawQuery.replace(/[:']/g, '').replace(/[^a-zA-Z0-9\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+      // Strip hyphens, colons, and quotes and convert to spaces for better tracker fuzzy matching
+      const queryToUse = rawQuery.replace(/[:'-]/g, ' ').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
       const idToUse = customQuery ? null : imdbId;
       const data = await searchTorbox(idToUse, queryToUse);
       setTorrents(data || []);

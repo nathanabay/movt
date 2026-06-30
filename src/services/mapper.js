@@ -22,6 +22,15 @@ export function parseEpisodeFile(filename) {
     return null;
 }
 
+export function normalizeName(name) {
+    if (!name) return '';
+    return name
+        .replace(/\[.*?\]/g, '') // Remove [Release Group] tags
+        .replace(/www\.[a-zA-Z0-9]+\.[a-z]+/gi, '') // Remove domain names
+        .replace(/[^a-zA-Z0-9]/g, '') // Remove all spaces, hyphens, colons, dots
+        .toLowerCase();
+}
+
 export function buildLibraryMap(torboxList) {
     const libraryMap = { tv: {}, movies: {} };
     if (!torboxList || !Array.isArray(torboxList)) return libraryMap;
@@ -34,7 +43,8 @@ export function buildLibraryMap(torboxList) {
         
         if (tvMatch) {
             let showKey = rawName.substring(0, tvMatch.index);
-            showKey = showKey.replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
+            showKey = normalizeName(showKey);
+            if (!showKey) continue;
             
             for (const file of torrent.files) {
                 const parsed = parseEpisodeFile(file.name);
@@ -55,8 +65,8 @@ export function buildLibraryMap(torboxList) {
             if (movieSplitMatch) {
                movieKey = rawName.substring(0, movieSplitMatch.index);
             }
-            movieKey = movieKey.replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
-            if (!libraryMap.movies[movieKey]) {
+            movieKey = normalizeName(movieKey);
+            if (movieKey && !libraryMap.movies[movieKey]) {
                 libraryMap.movies[movieKey] = {
                     torrent_id: torrent.id,
                     files: torrent.files
@@ -69,21 +79,21 @@ export function buildLibraryMap(torboxList) {
 
 export function isTvSeasonMapped(mappedLibrary, showTitle, season) {
     if (!mappedLibrary || !mappedLibrary.tv || !showTitle) return false;
-    const cleanName = showTitle.replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
+    const cleanName = normalizeName(showTitle);
     const matchedKeys = Object.keys(mappedLibrary.tv).filter(k => k === cleanName || cleanName.includes(k) || k.includes(cleanName));
     return matchedKeys.some(k => mappedLibrary.tv[k]?.[season] && Object.keys(mappedLibrary.tv[k][season]).length > 0);
 }
 
 export function isTvEpisodeMapped(mappedLibrary, showTitle, season, episode) {
     if (!mappedLibrary || !mappedLibrary.tv || !showTitle) return false;
-    const cleanName = showTitle.replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
+    const cleanName = normalizeName(showTitle);
     const matchedKeys = Object.keys(mappedLibrary.tv).filter(k => k === cleanName || cleanName.includes(k) || k.includes(cleanName));
     return matchedKeys.some(k => mappedLibrary.tv[k]?.[season]?.[episode]);
 }
 
 export function isMovieMapped(mappedLibrary, movieTitle) {
     if (!mappedLibrary || !mappedLibrary.movies || !movieTitle) return false;
-    const cleanName = movieTitle.replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
+    const cleanName = normalizeName(movieTitle);
     const matchedKeys = Object.keys(mappedLibrary.movies).filter(k => k === cleanName || cleanName.includes(k) || k.includes(cleanName));
     return matchedKeys.length > 0;
 }
