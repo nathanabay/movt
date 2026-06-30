@@ -23,7 +23,7 @@ import { useTvSeasons } from '../hooks/useTvSeasons';
 import { useTorboxSearch } from '../hooks/useTorboxSearch';
 import { useCastSpotlight } from '../hooks/useCastSpotlight';
 import { useTorboxStream } from '../hooks/useTorboxStream';
-import { buildLibraryMap } from '../services/mapper';
+import { buildLibraryMap, isTvSeasonMapped, isTvEpisodeMapped, isMovieMapped } from '../services/mapper';
 
 const MovieDetails = ({ type }) => {
   const { id } = useParams();
@@ -81,26 +81,25 @@ const MovieDetails = ({ type }) => {
     if (torboxList.some(t => t.hash && t.hash.toLowerCase() === hash)) return true;
 
     // Block redownload if entire movie is already in TorBox
-    if (type === 'movie' && getCachedBadge(movie.title || movie.name)) return true;
 
     // Block redownload for TV shows if the specific season/episode search is mapped
     if (type === 'tv' && currentSearchTitle) {
-      const cleanShowName = (movie.title || movie.name || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
-      const matchedShowKeys = mappedLibrary ? Object.keys(mappedLibrary).filter(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : [];
+      const epMatch = currentSearchTitle.match(/[sS](\d{1,2})[eE](\d{1,2})/);
+      const seasonMatch = currentSearchTitle.match(/[sS](\d{1,2})$/);
       
-      if (matchedShowKeys.length > 0) {
-        const epMatch = currentSearchTitle.match(/[sS](\d{1,2})[eE](\d{1,2})/);
-        const seasonMatch = currentSearchTitle.match(/[sS](\d{1,2})$/);
-        
-        if (epMatch) {
-          const s = parseInt(epMatch[1], 10);
-          const e = parseInt(epMatch[2], 10);
-          if (matchedShowKeys.some(k => mappedLibrary[k]?.[s]?.[e])) return true;
-        } else if (seasonMatch) {
-          const s = parseInt(seasonMatch[1], 10);
-          if (matchedShowKeys.some(k => mappedLibrary[k]?.[s] && Object.keys(mappedLibrary[k][s]).length > 0)) return true;
-        }
+      if (epMatch) {
+        const s = parseInt(epMatch[1], 10);
+        const e = parseInt(epMatch[2], 10);
+        if (isTvEpisodeMapped(mappedLibrary, movie.title || movie.name, s, e)) return true;
+      } else if (seasonMatch) {
+        const s = parseInt(seasonMatch[1], 10);
+        if (isTvSeasonMapped(mappedLibrary, movie.title || movie.name, s)) return true;
       }
+    }
+    
+    // Block redownload for Movies
+    if (type === 'movie') {
+      if (isMovieMapped(mappedLibrary, movie.title || movie.name)) return true;
     }
     
     return false;
@@ -143,19 +142,6 @@ const MovieDetails = ({ type }) => {
     sources: [{ src: streamUrl, type: 'video/mp4' }],
     subtitleUrl: subtitleUrl
   }), [streamUrl, subtitleUrl]);
-
-
-
-  const getCachedBadge = (titleStr) => {
-    if (!torboxList || torboxList.length === 0 || !titleStr) return false;
-    const nameRegex = new RegExp(titleStr.replace(/[^a-zA-Z0-9]/g, '.*'), 'i');
-    for (const t of torboxList) {
-      if (nameRegex.test(t.name) || (t.files && t.files.length > 0 && nameRegex.test(t.files[0].name))) {
-        return true;
-      }
-    }
-    return false;
-  };
 
   if (loading) return (
     <div className="movie-details-modal-wrapper fade-in">
@@ -398,7 +384,7 @@ const MovieDetails = ({ type }) => {
                 <h4>Next Up / Recommended</h4>
                 <div className="next-up-scroll">
                   {(movie.recommendations?.results || movie.similar?.results || []).slice(0, 5).map(rec => {
-                    const isCached = getCachedBadge(rec.title || rec.name);
+                    const isMapped = type === 'movie' ? isMovieMapped(mappedLibrary, rec.title) : false;
                     return (
                       <div key={rec.id} className="next-up-card" onClick={(e) => {
                         e.stopPropagation();
@@ -406,10 +392,12 @@ const MovieDetails = ({ type }) => {
                         navigate(`/${rec.media_type || type}/${rec.id}`);
                         window.scrollTo(0, 0);
                       }}>
-                        <img src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path}`} alt={rec.title || rec.name} />
+                        <div className="next-up-image-container">
+                            <img src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path}`} alt={rec.title || rec.name} loading="lazy" />
+                            {isMapped && <span className="badge-instant-play">⚡ Instant</span>}
+                        </div>
                         <div className="next-up-info">
                           <span>{rec.title || rec.name}</span>
-                          {isCached && <span className="badge-instant-play">⚡ Instant</span>}
                         </div>
                       </div>
                     );

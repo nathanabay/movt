@@ -1,13 +1,12 @@
 import React from 'react';
 import { Play, Download, Check } from 'lucide-react';
+import { isTvSeasonMapped, isTvEpisodeMapped } from '../../services/mapper';
 
 const EpisodesList = ({ 
   movie, selectedSeason, setSelectedSeason, fetchTorrents, 
   loadingSeason, seasonData, mappedLibrary, handleWatchEpisode 
 }) => {
-  const cleanShowName = (movie.title || movie.name || '').replace(/[\\._]/g, ' ').replace(/[^a-zA-Z0-9\\s]/g, '').trim().toLowerCase();
-  const matchedShowKeys = mappedLibrary ? Object.keys(mappedLibrary).filter(k => k === cleanShowName || cleanShowName.includes(k) || k.includes(cleanShowName)) : [];
-  const isSeasonDownloaded = matchedShowKeys.some(k => mappedLibrary[k]?.[selectedSeason] && Object.keys(mappedLibrary[k][selectedSeason]).length > 0);
+  const isSeasonDownloaded = isTvSeasonMapped(mappedLibrary, movie.title || movie.name, selectedSeason);
 
   return (
     <div className="episodes-section">
@@ -50,7 +49,7 @@ const EpisodesList = ({
           {seasonData.episodes.map((episode) => {
             
             // Fast O(1) check
-            const isDownloaded = matchedShowKeys.some(k => mappedLibrary[k]?.[selectedSeason]?.[episode.episode_number]);
+            const isDownloaded = isTvEpisodeMapped(mappedLibrary, movie.title || movie.name, selectedSeason, episode.episode_number);
 
             return (
               <div 
