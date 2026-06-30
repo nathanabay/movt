@@ -22,9 +22,16 @@ const StreamList = ({ currentSearchTitle, type, loadingTorrents, torrents, isMag
     });
 
     // Sort logic for "Best" torrent:
-    // 1. Prioritize TorBox Cached torrents
-    // 2. Fallback to highest seeders
+    // 1. Penalize unplayable web audios (DTS, TrueHD)
+    // 2. Prioritize TorBox Cached torrents
+    // 3. Fallback to highest seeders
     parsed.sort((a, b) => {
+      const aBadAudio = a.audio === 'DTS' || a.audio === 'TrueHD' || a.audio === 'FLAC';
+      const bBadAudio = b.audio === 'DTS' || b.audio === 'TrueHD' || b.audio === 'FLAC';
+      
+      if (aBadAudio && !bBadAudio) return 1;
+      if (!aBadAudio && bBadAudio) return -1;
+      
       if (a.isCached && !b.isCached) return -1;
       if (!a.isCached && b.isCached) return 1;
 

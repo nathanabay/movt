@@ -45,6 +45,8 @@ export const VideoPlayer = React.memo(({ options, onReady }) => {
       videoElement.classList.add('video-js');
       videoElement.classList.add('vjs-big-play-centered');
       videoElement.classList.add('vjs-theme-netflix');
+      videoElement.setAttribute('playsinline', 'playsinline');
+      videoElement.setAttribute('webkit-playsinline', 'webkit-playsinline');
 
       videoRef.current.appendChild(videoElement);
 
